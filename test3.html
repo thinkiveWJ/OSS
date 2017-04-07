@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>test</title>
+</head>
+<body>
+<input id="url" type="text" value="http://localhost:8080/posOSS/"/>
+<input id="sendBtn" type="button" value="send" onclick="send()"/>
+<textarea id="result" rows="20" cols="120"></textarea>
+<script src="./js/jquery.js"></script>
+<script type="text/javascript">
+
+    function send() {
+        var model = {idCard:"610324199006100523"};
+        sendJson("userLimit/loadUserLimit", model);
+    }
+
+    function sendJson(url, model) {
+        var baseUrl = $("#url").val();
+        url = baseUrl + url + ".do";
+        $.ajax
+        ({
+            type: "POST",
+            url: url,
+            dataType: "json",
+            data: JSON.stringify(model),
+            contentType: "application/json",
+            success: function (data) {
+                alert("成功");
+                alert(data)
+            },
+            error: function () {
+                alert("失败")
+            }
+        });
+
+    }
+</script>
+</body>
+</html>

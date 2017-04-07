@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../../theme/default/page.members.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.getDictionaryData.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadPic.js"></script>
+
+<link href="../../../theme/default/ui.pick.css" rel="stylesheet" />
+<script type="text/javascript" src="../../../js/ui.pick.js"></script>
+
+<link rel="stylesheet" href="../../../theme/default/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="../../../js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="../../../js/jquery.ztree.excheck.js"></script>
+<style type="text/css">
+.pay-info-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.pay-choose-channel input[type='radio']{vertical-align:middle;}
+.pay-choose-channel  .channel-details{margin:12px auto;}
+.width120{width:100px;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	listUrl="../../../posMachineInfo/findStoreInfoList.do";
+	
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{styleName:$("#fastQueryText").val()}}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch:function(){
+				var postData={};
+				var storeName=$("#storeSearch").val();
+				var payModeID=$("#payFuncSearch").data("chosen").selectedItem();
+				payModeID=payModeID?payModeID["value"]:"";
+				postData={storeName:storeName,payModeId:payModeID};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			addBTN:function(){
+				showSlidePanel(".page-add-panel",function(){
+					addBTNFunc();
+				});
+			},
+			addCancel:function(){
+				hideSlidePanel(".page-add-panel");
+			},
+			taskControlBTN:function(){
+				showSlidePanel(".page-task-control-panel",function(){
+					taskControlFunc();
+				});
+			},
+			taskSearch:function(){
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{}}).hideCol("somecol").trigger("reloadGrid");
+			},
+			taskCanel:function(){
+				hideSlidePanel(".page-task-control-panel",function(){
+					listId = "#list2";
+					pagerId = '#pager2';
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData: {}}).hideCol("somecol").trigger("reloadGrid"); 
+				});
+			},
+			personNumSearch:function(){
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{}}).hideCol("somecol").trigger("reloadGrid");
+			},
+			personNumCanel:function(){
+				hideSlidePanel(".page-person-number-panel",function(){
+					listId = "#list2";
+					pagerId = '#pager2';
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData: {}}).hideCol("somecol").trigger("reloadGrid"); 
+				});
+			},
+			chooseLabelCancel:function(){
+				hideSlidePanel(".page-choose-label-panel");
+			},
+			chooseCancelStep2:function(){
+				hideSlidePanel(".page-add-step2-choose");
+			},
+			memberLabelAddCancel:function(){
+				hideSlidePanel(".page-edit-label-panel");
+			},
+			batchLabelBTN:function(){
+				showSlidePanel(".batch-choose",function(){
+					//批量标签
+					batchLabelFunc()
+				});
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'refPrice',autoWidth : true,align : "center"},
+			     			{name : '',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="lookPersonNumButton(\''+arg3.price+'\')">'+arg3.storeId+'</button>';
+			     			}},
+			     			{name : 'refPrice',autoWidth : true,align : "center"},
+			     			{name : '',autoWidth : true,align : "center",formatter:function(arg1,arg2,arg3){
+			     					return '<button class="wj-jqgrid-button" onclick="editButton(\''+arg3.price+'\')">编辑</button>'+
+			     							'<button class="wj-jqgrid-button" onclick="memberLabelAddButton(\''+arg3.price+'\')">会员标签添加</button>'+
+			     							'<button class="wj-jqgrid-button" onclick="banButton(\''+arg3.price+'\')">禁止</button>';
+			     				}
+			     			}
+			     			], 
+			     			_colNames = ['', '标签名称', '标签人数', '创建时间','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+	});
+	/******新增*****/
+	function addBTNFunc(){
+		//点击定时开关按钮
+		$("#addOnOffBTN").unbind('click').bind('click',function(){
+			var flagOnOff=$(this).find("span").eq(0).hasClass("on");
+			if(flagOnOff){
+				$(this).find("span").eq(1).addClass("on").siblings().removeClass("on");
+				$(this).find("span").eq(1).text("OFF");
+				$(this).find("span").eq(0).text("");
+			}else{
+				$(this).find("span").eq(0).addClass("on").siblings().removeClass("on");
+				$(this).find("span").eq(1).text("");
+				$(this).find("span").eq(0).text("ON");
+			}
+		});
+		$("#addChooseLabelAttr").unbind('click').bind('click',function(){
+			showSlidePanel(".first-choose",function(){
+				//新建时候的选择
+				chooseLabelFunc();
+			});
+		});
+	}
+	/*******新建时候的选择*******/
+	function chooseLabelFunc(){
+		//创建时间
+		$("#createLabelAttrStartDate").datepicker({
+			changeMonth: true,
+		    changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#createLabelAttrEndDate" ).datepicker( "option", "minDate", selectedDate );
+		      }
+		});
+		$("#createLabelAttrEndDate").datepicker({
+			changeMonth: true,
+		    changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#createLabelAttrStartDate" ).datepicker( "option", "maxDate", selectedDate );
+		      }
+		});
+		//交易时间
+		$("#tradeLabelAttrStartDate").datepicker({
+			changeMonth: true,
+		    changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#tradeLabelAttrEndDate" ).datepicker( "option", "minDate", selectedDate );
+		      }
+		});
+		$("#tradeLabelAttrEndDate").datepicker({
+			changeMonth: true,
+		    changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#tradeLabelAttrStartDate" ).datepicker( "option", "maxDate", selectedDate );
+		      }
+		});
+		//删除标签
+		$(".first-choose .chosee-selected-box a i").unbind('click').bind('click',function(){
+			$(this).parent("a.on").remove();
+			var name=$(this).parent("a.on").attr("name");
+			$(".first-choose .chosee-content-box a[name='"+name+"']").removeClass("on");
+			//点击选择会员时候的方法
+			chooseLabelFunc();
+		});
+		//新增标签
+		$(".first-choose .chosee-content-box a").unbind('click').bind('click',function(){
+			var classFlag=$(this).hasClass("on");
+			if(!classFlag){
+				$(this).addClass("on");
+				var text=$(this).text(),
+					name=$(this).attr("name");
+				$(".first-choose .chosee-selected-box").append('<a name="'+name+'" class="on">'+text+'<i class="fa fa-times"></i></a>');
+			}else{
+				var name=$(this).attr("name");
+				$(".first-choose .chosee-content-box a[name='"+name+"']").removeClass("on");
+				$(".first-choose .chosee-selected-box a[name='"+name+"']").remove();
+			}
+			//点击选择会员时候的方法
+			chooseLabelFunc();
+		});
+		//选择商品
+		$("#labelAttrGoodsChoose").focus(function(){
+			showSlidePanel(".page-add-step2-choose");
+		});
+		
+	}
+	/******批量标签*******/
+	function batchLabelFunc(){
+		//删除标签
+		$(".batch-choose .chosee-selected-box a i").unbind('click').bind('click',function(){
+			$(this).parent("a.on").remove();
+			var name=$(this).parent("a.on").attr("name");
+			$(".batch-choose .chosee-content-box a[name='"+name+"']").removeClass("on");
+			//点击选择会员时候的方法
+			batchLabelFunc();
+		});
+		//新增标签
+		$(".batch-choose .chosee-content-box a").unbind('click').bind('click',function(){
+			var classFlag=$(this).hasClass("on");
+			if(!classFlag){
+				$(this).addClass("on");
+				var text=$(this).text(),
+					name=$(this).attr("name");
+				$(".batch-choose .chosee-selected-box").append('<a name="'+name+'" class="on">'+text+'<i class="fa fa-times"></i></a>');
+			}else{
+				var name=$(this).attr("name");
+				$(".batch-choose .chosee-content-box a[name='"+name+"']").removeClass("on");
+				$(".batch-choose .chosee-selected-box a[name='"+name+"']").remove();
+			}
+			//点击选择会员时候的方法
+			batchLabelFunc();
+		});
+	}
+	/*****任务监控********/
+	function taskControlFunc(){
+		listId = "#taskControlList";
+		pagerId = '#taskControlPager';
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'skuId',autoWidth : true,align:"center"},
+			     			{name : 'styleName',autoWidth : true,align:"center"}, 
+			     			{name : 'bigTypeName',autoWidth : true,align : "center"},
+			     			{name : 'middleTypeName',autoWidth : true,align:"center"},
+			     			{name : 'smallTypeName',autoWidth : true,align:"center"}, 
+			     			{name : 'sexName',autoWidth : true,align:"center"},
+			     			{name : 'seasonName',autoWidth : true,align:"center"},
+			     			{name:"giveCount",autoWidth : true,align:"center",editable:true}
+			     			], 
+			     			_colNames = [' ', '商品编号', '商品名称', '大类', '中类','小类','性别','季节','数量'];
+		window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,postData:{},colNames : _colNames,
+			colModel : _colModel,pager : pagerId}));
+		var $hpanel=$(".page-task-control-panel .page-content"),w=$hpanel.width(),
+		$tx=$hpanel.find(".header-search"),$tx2=$hpanel.find(".ui-jqgrid-pager"),$tx3=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv");
+		var h=$hpanel.height()-$tx.height()-$tx2.height()-$tx3.height()-36,
+		w=$hpanel.width()-36;
+		$tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+	}
+	/**********查看会员人数的具体信息******/
+	function lookPersonNumButton(){
+		showSlidePanel(".page-person-number-panel",function(){
+			listId = "#personNumList";
+			pagerId = '#personNumPager';
+			var _colModel = [
+				     		    {name : 'id',key : true,width : 60,hidden : true},
+				     			{name : 'skuId',autoWidth : true,align:"center"},
+				     			{name : 'styleName',autoWidth : true,align:"center"}, 
+				     			{name : 'bigTypeName',autoWidth : true,align : "center"},
+				     			{name : 'middleTypeName',autoWidth : true,align:"center"},
+				     			{name : 'smallTypeName',autoWidth : true,align:"center"}, 
+				     			{name : 'sexName',autoWidth : true,align:"center"},
+				     			{name : 'seasonName',autoWidth : true,align:"center"},
+				     			{name:"giveCount",autoWidth : true,align:"center",editable:true}
+				     			], 
+				     			_colNames = [' ', '商品编号', '商品名称', '大类', '中类','小类','性别','季节','数量'];
+			window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,postData:{},colNames : _colNames,
+				colModel : _colModel,pager : pagerId}));
+			var $hpanel=$(".page-person-number-panel .page-content"),w=$hpanel.width(),
+			$tx=$hpanel.find(".header-search"),$tx2=$hpanel.find(".ui-jqgrid-pager"),$tx3=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv");
+			var h=$hpanel.height()-$tx.height()-$tx2.height()-$tx3.height()-36,
+			w=$hpanel.width()-36;
+			$tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+		});
+	}
+	/********会员标签添加**********/
+	function memberLabelAddButton(){
+		showSlidePanel(".page-edit-label-panel",function(){
+			memberLaberAddFunc();
+		});
+	}
+	/****会员标签增加*******/
+	function memberLaberAddFunc(){
+		//删除标签
+		$(".member-list-label-edit .chosee-selected-box a i").unbind('click').bind('click',function(){
+			$(this).parent("a.on").remove();
+			var name=$(this).parent("a.on").attr("name");
+			$(".member-list-label-edit .chosee-content-box a[name='"+name+"']").removeClass("on");
+			var len=$(".member-list-label-edit .chosee-selected-box a").length;
+			$("#editLabelSelected span").text(len);
+		});
+		//新增标签
+		$(".member-list-label-edit .chosee-content-box a").unbind('click').bind('click',function(){
+			var classFlag=$(this).hasClass("on");
+			if(!classFlag){
+				$(this).addClass("on");
+				var text=$(this).text(),
+					name=$(this).attr("name");
+				$(".member-list-label-edit .chosee-selected-box").append('<a name="'+name+'" class="on">'+text+'<i class="fa fa-times"></i></a>');
+				var len=$(".member-list-label-edit .chosee-selected-box a").length;
+				$("#editLabelSelected span").text(len);
+			}else{
+				var name=$(this).attr("name");
+				$(".member-list-label-edit .chosee-content-box a[name='"+name+"']").removeClass("on");
+				$(".member-list-label-edit .chosee-selected-box a[name='"+name+"']").remove();
+				var len=$(".member-list-label-edit .chosee-selected-box a").length;
+				$("#editLabelSelected span").text(len);
+			}
+			//会员标签增加
+			memberLaberAddFunc();
+		});
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="addBTN"><i class="fa fa-plus"></i>新建</button></td>
+						<td class="buttons"><button id="batchLabelBTN">批量标签</button></td>
+						<td class="buttons"><button id="taskControlBTN">任务监控</button></td>
+						<td style="padding-left: 12px;">会员标签名称：<input type="text"/></td>
+						<td style="padding-left: 12px;">
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+<!-- 							<button id="searchRip" title="点击展开高级查询面板"> -->
+<!-- 								<i class="fa fa-angle-up" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- 新增模板 -->
+	<div class="page-add-panel full-drop-panel">
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="addSave"><i class="fa fa-check"></i>保存</button>
+					<button id="addCancel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="add-condition table">
+					<table>
+						<tr>
+							<td class="condition-right">标签名称：</td>
+							<td><div class="label-attr"></div></td>
+						</tr>
+						<tr>
+							<td class="condition-right">标签属性：</td>
+							<td><input type="text" disabled/></td>
+							<td class="center"><a class="button on" id="addChooseLabelAttr">选择</a></td>
+							<td><a class="button">删除</a></td>
+						</tr>
+						<tr>
+							<td class="condition-right">定期任务：</td>
+							<td><select data-xtype="chosen" style="width:200px;"></select></td>
+							<td><select data-xtype="chosen" style="width:200px;"></select></td>
+							<td><select data-xtype="chosen" style="width:200px;"></select></td>
+							<td class="center">
+								<a class="on-off" id="addOnOffBTN">
+									<span class="on left">ON</span><span class="left"></span>
+									<div class="clearfix"></div>
+								</a>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 标签属性的选择 -->
+	<div class="page-choose-label-panel full-drop-panel first-choose">
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="chooseLabelSave"><i class="fa fa-check"></i>保存</button>
+					<button id="chooseLabelCancel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="choose-label">
+					<table class="label-attr">
+						<tr>
+							<td class="content-right">性别：</td><td><select data-xtype="chosen" style="width:208px;"></select></td>
+							<td class="content-right">会员积分：</td><td class="input-width"><input type="text"/>&nbsp;-&nbsp;<input type="text"/></td>
+						</tr>
+						<tr>
+							<td class="content-right">选择渠道：</td><td><select data-xtype="chosen" style="width:208px;"></select></td>
+							<td class="content-right">创建日期：</td>
+							<td class="input-width">
+								<input id="createLabelAttrStartDate" type="text"/>&nbsp;-&nbsp;<input id="createLabelAttrEndDate" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right">年龄：</td><td class="input-width"><input type="text"/>&nbsp;-&nbsp;<input type="text"/></td>
+							<td class="content-right">交易日期：</td>
+							<td class="input-width">
+								<input id="tradeLabelAttrStartDate" type="text"/>&nbsp;-&nbsp;<input id="tradeLabelAttrEndDate" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right">交易门店：</td>
+							<td>
+								<select data-xtype="chosen" style="width:100px;"></select>
+								<select data-xtype="chosen" style="width:100px;"></select>
+								<select data-xtype="chosen" style="width:100px;"></select>
+							</td>
+							<td class="content-right">交易金额：</td>
+							<td class="input-width">
+								<input id="" type="text"/>&nbsp;-&nbsp;<input id="" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right">商品选择：</td>
+							<td>
+								<input type="text" id="labelAttrGoodsChoose" placeholder="请选择商品" readonly/>
+							</td>
+							<td class="content-right">交易次数：</td>
+							<td class="input-width">
+								<input id="" type="text"/>&nbsp;-&nbsp;<input id="" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right"></td>
+							<td></td>
+							<td class="content-right">平均客单价：</td>
+							<td class="input-width">
+								<input id="" type="text"/>&nbsp;-&nbsp;<input id="" type="text"/>
+							</td>
+						</tr>
+					</table>
+					<div class='choose-selected'>
+						<div class="choose-label-title">已选标签</div>
+						<div class="chosee-selected-box"><a name="5" class="on">啊打发5<i class="fa fa-times"></i></a></div>
+					</div>
+					<div class="choose-content">
+						<div class="choose-label-title">
+							<span>已选标签</span>
+							<div class="choose-search right">
+								<input placeholder="标签" type="text"/>
+								<a class="choose-search-btn"><i class="fa fa-search"></i></a>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="chosee-content-box">
+							<a name="5" class="on">啊打发5</a>
+							<a name="4">啊打发</a>
+							<a name="1">啊打发1</a>
+							<a name="2">啊打发2</a>
+							<a name="3">啊打发3</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="page-choose-label-panel full-drop-panel batch-choose">
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="chooseLabelSave"><i class="fa fa-check"></i>保存</button>
+					<button id="chooseLabelCancel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="choose-label">
+					<table class="label-attr">
+						<tr>
+							<td class="content-right">性别：</td><td><select data-xtype="chosen" style="width:208px;"></select></td>
+							<td class="content-right">会员积分：</td><td class="input-width"><input type="text"/>&nbsp;-&nbsp;<input type="text"/></td>
+						</tr>
+						<tr>
+							<td class="content-right">选择渠道：</td><td><select data-xtype="chosen" style="width:208px;"></select></td>
+							<td class="content-right">创建日期：</td>
+							<td class="input-width">
+								<input id="createLabelAttrStartDate" type="text"/>&nbsp;-&nbsp;<input id="createLabelAttrEndDate" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right">年龄：</td><td class="input-width"><input type="text"/>&nbsp;-&nbsp;<input type="text"/></td>
+							<td class="content-right">交易日期：</td>
+							<td class="input-width">
+								<input id="tradeLabelAttrStartDate" type="text"/>&nbsp;-&nbsp;<input id="tradeLabelAttrEndDate" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right">交易门店：</td>
+							<td>
+								<select data-xtype="chosen" style="width:100px;"></select>
+								<select data-xtype="chosen" style="width:100px;"></select>
+								<select data-xtype="chosen" style="width:100px;"></select>
+							</td>
+							<td class="content-right">交易金额：</td>
+							<td class="input-width">
+								<input id="" type="text"/>&nbsp;-&nbsp;<input id="" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right">商品选择：</td>
+							<td>
+								<input type="text" id="labelAttrGoodsChoose" placeholder="请选择商品" readonly/>
+							</td>
+							<td class="content-right">交易次数：</td>
+							<td class="input-width">
+								<input id="" type="text"/>&nbsp;-&nbsp;<input id="" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right"></td>
+							<td></td>
+							<td class="content-right">平均客单价：</td>
+							<td class="input-width">
+								<input id="" type="text"/>&nbsp;-&nbsp;<input id="" type="text"/>
+							</td>
+						</tr>
+					</table>
+					<div class='choose-selected'>
+						<div class="choose-label-title">已选标签</div>
+						<div class="chosee-selected-box"><a name="5" class="on">啊打发5<i class="fa fa-times"></i></a></div>
+					</div>
+					<div class="choose-content">
+						<div class="choose-label-title">
+							<span>已选标签</span>
+							<div class="choose-search right">
+								<input placeholder="标签" type="text"/>
+								<a class="choose-search-btn"><i class="fa fa-search"></i></a>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="chosee-content-box">
+							<a name="5" class="on">啊打发5</a>
+							<a name="4">啊打发</a>
+							<a name="1">啊打发1</a>
+							<a name="2">啊打发2</a>
+							<a name="3">啊打发3</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 标签属性的选择 新建 选择商品  -->
+	<div class="page-add-step2-choose full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;position:relative;">
+					<button id="chooseImportStep2"><i class="fa fa-pencil"></i>导入
+						<form action="../../file/itemUpload.do" id="uploadStep2Form" enctype="multipart/form-data;" method="post" onsubmit="return saveReport();">
+							<input name="itemFile" id="uploadStep2" type="file" style="position:absolute;left:0px;top:0;bottom:0;right:0px;opacity:0;filter:Alpha(opacity=0);cursor:pointer;"/>
+							<input name="uploadInpFileName" id="uploadStep2Name" type="hidden"/>
+							<input name="promotionID" id="promotionIDUpload" type="hidden"/>
+							<input name="isGiveGoods" value="1" type="hidden"/>
+						</form>
+					</button>
+					<button id="chooseSaveStep2"><i class="fa fa-check"></i>保存</button>
+					<button id="chooseCancelStep2"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<!-- 选择购买内容 -->
+		<div class="page-content">
+			<div class="choose-setp2-content choose-setp2-content2">
+				<div class="choose-content-head"></div>
+				<table class="choose-content-condition" style="width:100%;border:1px solid #ccc">
+					<tr>
+						<td>选择范围：
+							<input data-url="./pages/members/memberManagement/goodsLeftTree.html" id="goodsEffectRang" data-xtype="pick"  data-dialogWidth="600" data-dialogHeight="400" style="width:152px;"  name="jde"/>
+						</td>
+					</tr>
+				</table>
+				<table id="chooseTableStep2"></table>
+				<div id="choosePageStep2"></div>
+			</div>
+		</div>
+	</div>
+	<!-- 任务监控 -->
+	<div class="page-task-control-panel full-drop-panel">
+		<div class="title-bar step1">
+<!-- 			<h4><i class="fa fa-plus"></i></h4> -->
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="taskSearch"><i class="fa fa-search"></i>搜索</button>
+					<button id="taskCanel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="header-search">
+					<div style="display: inline-block;">会员标签名称：<input type="text" style="padding:3px;"/></div>
+					<div style="margin-left:24px;display: inline-block;">状态：<select data-xtype="chosen" style="width:208px;"></select></div>
+				</div>
+				<table id="taskControlList"></table>
+				<div id="taskControlPager"></div>
+			</div>
+		</div>
+	</div>
+	<!-- 会员人数详细信息 -->
+	<div class="page-person-number-panel full-drop-panel">
+		<div class="title-bar step1">
+<!-- 			<h4><i class="fa fa-plus"></i></h4> -->
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="personNumSearch"><i class="fa fa-search"></i>搜索</button>
+					<button id="personNumCanel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="header-search">
+					<div style="display: inline-block;">会员手机号：<input type="text" style="padding:3px;"/></div>
+				</div>
+				<table id="personNumList"></table>
+				<div id="personNumPager"></div>
+			</div>
+		</div>
+	</div>
+	<!-- 会员标签添加 -->
+	<div class="page-edit-label-panel full-drop-panel page-choose-label-panel" style="position:relative;">
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="memberLabelAddSave"><i class="fa fa-check"></i>保存</button>
+					<button id="memberLabelAddCancel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="member-list-label-edit choose-label content" style="margin:0 auto 48px;">
+					<div class="label-box">
+						<div class="choose-label" style="margin:0 auto 48px;">
+							<div class='choose-selected'>
+								<div class="choose-label-title header" id="editLabelSelected">已选标签：<span style="margin-left:12px;">10</span></div>
+								<div class="chosee-selected-box"><a name="5" class="on">啊打发5<i class="fa fa-times"></i></a></div>
+							</div>
+							<div class="choose-content">
+								<div class="choose-label-title">
+									<span>已选标签</span>
+									<div class="choose-search right">
+										<input placeholder="标签" type="text"/>
+										<a class="choose-search-btn"><i class="fa fa-search"></i></a>
+									</div>
+									<div class="clearfix"></div>
+								</div>
+								<div class="chosee-content-box">
+									<a name="5" class="on">啊打发5</a>
+									<a name="4">啊打发</a>
+									<a name="1">啊打发1</a>
+									<a name="2">啊打发2</a>
+									<a name="3">啊打发3</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

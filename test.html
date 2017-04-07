@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>test</title>
+</head>
+<body>
+<input id="url" type="text" value="http://localhost:8080/posOSS/"/>
+<input id="custid" type="text" value="1"/>
+<input id="sendBtn" type="button" value="send" onclick="send()"/>
+<textarea id="result" rows="20" cols="120"></textarea>
+<script src="./js/jquery.js"></script>
+<script type="text/javascript">
+    $(function() {
+//        var oriUrl = location.href + "";
+//        var param = oriUrl.substr(oriUrl.indexOf("?"));
+//        var custid = getUrlParam("custid");
+//        send(custid);
+    })
+
+    function getUrlParam(name){
+        //构造一个含有目标参数的正则表达式对象
+        var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+        //匹配目标参数
+        var r = window.location.search.substr(1).match(reg);
+        //返回参数值
+        if (r!=null) return unescape(r[2]);
+        return null;
+    }
+
+    function send() {
+        var model = {};
+        var custid = $("#custid").val();
+        model.custid = custid;
+        sendJson("queryCustomerOrPointInfo", model, function(data) {$("#result").val($("#result").val() + "\n" + "queryCustomerOrPointInfo:" + data.custname);});
+        sendJson("queryCustPointListDetail", model, function(data) {$("#result").val($("#result").val() + "\n" + "queryCustPointListDetail:" + data.length);});
+
+        var customer = {};
+        customer.custid = "1";
+        customer.custno = "123456";
+        customer.custname = "AAAAAAAAA";
+        customer.custpwd = "123456";
+        customer.mobile = "1363687120";
+        customer.idtype = "1";
+        customer.idnum = "1";
+        customer.sex = "F";
+        customer.custgroup = "x";
+        customer.totalpoint = 100;
+        customer.usedpoint = 100;
+        customer.remainpoint = 100;
+        customer.nationality = "xxx";
+        customer.country = "xx";
+        customer.province = "12c";
+        customer.city = "xd1";
+        customer.address = "d24";
+        customer.birthday = "2010-10-10";
+        customer.email = "123";
+        customer.hobby = "xf123";
+        customer.tag = "xxd13";
+        customer.bankcardno = "xcxc2";
+        customer.openid = "xx12300";
+        customer.sourcecode = "1";
+        customer.custtype = "1";
+        customer.custstatus = "1";
+        customer.married = "1";
+        customer.qq = "dsf23d";
+        customer.weibo = "vwere23";
+        customer.wechat = "cxv234";
+        customer.occupation = "xcv34";
+        customer.title = "df23d ";
+        customer.studentid = "sdfr23cv";
+        customer.custorgname = "xcfv43";
+        customer.attentiontime = "2010-10-10";
+        customer.cancelattentiontime = "2010-10-10";
+        customer.regtime = "2010-10-10";
+        customer.iscertified = "T";
+        customer.signature = "cv ewr3";
+        customer.avatar = "324dcx 3sd";
+        customer.memo = "df23 df ";
+        customer.storeid = "sdf324 fdf34 ";
+        customer.modifyuserid = "dsf 32r xc";
+        customer.modifydate = "2010-10-10";
+        customer.recordstate = "2010-10-10";
+        sendJson("updateCustomer", customer, function(data) {$("#result").val($("#result").val() + "\n" + "updateCustomer:" + data);});
+
+        var point = {};
+        point.custid = "xxx";
+        point.userid = "xxx";
+        point.storeid = "xxx";
+        point.funcid = "xxx";
+        point.bizdate = "2019-10-14";
+        point.addpoint = 10;
+        point.reducepoint = 10;
+        point.modifyuserid = "xxxxx";
+        point.recordstate = "Y";
+        sendJson("insertPoint", point, function(data) {$("#result").val($("#result").val() + "\n" + "insertPoint:" + data);});
+    }
+
+    function sendJson(url, model) {
+        var baseUrl = $("#url").val();
+        url = baseUrl + url + ".do";
+
+        var successFunc = arguments[2] ? arguments[2] : function(data) {alert(data);};
+
+        var errorFunc = arguments[3] ? arguments[3] : function(data) {alert(data);};
+
+        var submitType = arguments[4] ? arguments[4] : "POST";
+
+        $.ajax
+        ({
+            type : submitType,
+            url : url,
+            dataType : "json",
+            data : JSON.stringify(model),
+            contentType : "application/json",
+            success : successFunc,
+            error : errorFunc
+        });
+    }
+
+    function changeHref(page)
+    {
+        location.href = baseUrl + page;
+    }
+
+    function getHtml(url, successHandler)
+    {
+        $.ajax
+        ({
+            type : "POST",
+            url : url,
+            dataType : "html",
+            success : successHandler
+        });
+    }
+</script>
+</body>
+</html>

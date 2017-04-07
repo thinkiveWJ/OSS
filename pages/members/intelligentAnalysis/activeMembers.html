@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.treeview.css" rel="stylesheet" />
+<link href="../../../theme/default/page.personManagement.css" rel="stylesheet" />
+<link href="../../../theme/default/page.members.css" rel="stylesheet" />
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<link rel="stylesheet" href="../../../theme/default/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="../../../js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="../../../js/jquery.ztree.excheck.js"></script>
+<style>
+</style>
+<script type="text/javascript">
+	var listId = "#list2", exportKey="brand",
+	editorFormId = "#editorForm", 
+	pagerId = '#pager2', 
+	loadUrl = "../../../masterdata/brand.do?command=load", 
+	deleteUrl = "../../../masterdata/brand.do?command=delete", 
+	saveUrl = "../../../masterdata/brand.do?command=submit", 
+	listUrl = "../../../masterdata/queryRevolvingAmtList";
+
+	$(function() {
+		_initButtons();//from page.common.js
+		_initFormControls();//from page.common.js
+		_initValidateForXTypeForm(editorFormId);
+		$(".search-panel").show().data("show", true);
+		//点击新老会员
+		var str='<div class="members-buy-panel"><div class="member-buy-one"><div class="active-members-title"><div class="active-members-title-L left">'+
+		'新会员</div><div class="active-members-title-R right">100.00%</div><div class="clearfix"></div></div><div>'+
+		'<div class="active-members-detail">会员数：3</div><div class="active-members-detail">中成交额：60.00</div>'+
+		'<div class="active-members-detail">人均成交额：30.00</div><div class="clearfix"></div><div class="active-members-split-first"></div>'+
+		'</div></div><div class="member-buy-one"><div class="active-members-title"><div class="active-members-title-L left">新会员</div>'+
+		'<div class="active-members-title-R right">100.00%</div><div class="clearfix"></div></div><div><div class="active-members-detail">'+
+		'会员数：3</div><div class="active-members-detail">中成交额：60.00</div><div class="active-members-detail">人均成交额：30.00</div>'+
+		'<div class="clearfix"></div><div class="active-members-split"></div></div></div></div>';
+		$(".level2 .active-members-content").click(function(){
+			$(this).append(str).siblings().find(".members-buy-panel").remove();
+		});
+	});
+</script>
+</head>
+<body><form id="exportExcelForm" method="post"><input type="hidden" name="data"/></form>
+	<div class="page-list-panel">
+		<div class="t-content-panel">
+			<div class="head-panel" style="border-bottom:1px solid #ccc;margin:12px 0 0 0">
+				<div class="search-panel">
+					<div class="form-panel">
+						<form id="searchForm">
+							<table cellpadding="0" cellspacing="0" border="0">
+								<tr>
+									<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+									<td style="padding-left: 24px; padding-right: 5px;">选择区间：</td>
+									<td>
+										<select data-xtype="chosen" name="dateRang" style="width:170px;">
+											<option value="0">请选择</option>
+											<option>30天</option>
+											<option>60天</option>
+											<option>90天</option>
+										</select>
+									</td>
+									<td style="padding-left: 12px;">统计截止时间：</td>
+									<td>2015-23-12</td>
+									<td style="padding-left: 12px;"><button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button></td>
+								</tr>						
+							</table>
+						</form>
+					</div>
+				</div>
+			</div>
+			<!-- 活跃会员内容 -->
+			<div class="active-members-panel">
+				<div class="active-members-content left">
+					<div class="active-members-title">
+						<div class="active-members-title-L left">活跃会员</div>
+						<div class="active-members-title-R right">100.00%</div>
+						<div class="clearfix"></div>
+					</div>
+					<div class="active-members-detail-boxs">
+						<div class="active-members-detail">会员数：3</div>
+						<div class="active-members-detail">中成交额：60.00</div>
+						<div class="active-members-detail">人均成交额：30.00</div>
+						<div class="active-members-detail">重复购买会员数：2</div>
+						<div class="active-members-detail">重复购买金额：50.00</div>
+						<div class="active-members-detail">重复购买率：66.88%</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+				<div class="level2 left" style="width:200px;margin-left:100px;">
+					<div class="active-members-content left">
+						<div class="active-members-title">
+							<div class="active-members-title-L left">新会员</div>
+							<div class="active-members-title-R right">100.00%</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="active-members-detail-boxs">
+							<div class="active-members-detail">会员数：3</div>
+							<div class="active-members-detail">中成交额：60.00</div>
+							<div class="active-members-detail">人均成交额：30.00</div>
+							<div class="active-members-detail">重复购买会员数：2</div>
+							<div class="active-members-detail">重复购买金额：50.00</div>
+							<div class="active-members-detail">重复购买率：66.88%</div>
+							<div class="clearfix"></div>
+							<div class="active-members-split-first"></div>
+						</div>
+						<!-- 购买次数 -->
+						<div class="members-buy-panel">
+							<div class="member-buy-one">
+								<div class="active-members-title">
+									<div class="active-members-title-L left">新会员</div>
+									<div class="active-members-title-R right">100.00%</div>
+									<div class="clearfix"></div>
+								</div>
+								<div class="active-members-detail-boxs">
+									<div class="active-members-detail">会员数：3</div>
+									<div class="active-members-detail">中成交额：60.00</div>
+									<div class="active-members-detail">人均成交额：30.00</div>
+									<div class="clearfix"></div>
+									<div class="active-members-split-first"></div>
+								</div>
+							</div>
+							<div class="member-buy-one">
+								<div class="active-members-title">
+									<div class="active-members-title-L left">新会员</div>
+									<div class="active-members-title-R right">100.00%</div>
+									<div class="clearfix"></div>
+								</div>
+								<div class="active-members-detail-boxs">
+									<div class="active-members-detail">会员数：3</div>
+									<div class="active-members-detail">中成交额：60.00</div>
+									<div class="active-members-detail">人均成交额：30.00</div>
+									<div class="clearfix"></div>
+									<div class="active-members-split"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="active-members-content left">
+						<div class="active-members-title">
+							<div class="active-members-title-L left">老会员</div>
+							<div class="active-members-title-R right">100.00%</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="active-members-detail-boxs">
+							<div class="active-members-detail">会员数：3</div>
+							<div class="active-members-detail">中成交额：60.00</div>
+							<div class="active-members-detail">人均成交额：30.00</div>
+							<div class="active-members-detail">重复购买会员数：2</div>
+							<div class="active-members-detail">重复购买金额：50.00</div>
+							<div class="active-members-detail">重复购买率：66.88%</div>
+							<div class="active-members-split"></div>
+						</div>
+					</div>
+				</div>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

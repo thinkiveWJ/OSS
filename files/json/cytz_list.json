@@ -1,0 +1,63 @@
+{
+    "id": "",
+    "yjsk": "",
+    "list": [
+        {
+            "sl": "7%",
+            "sbywlx": "土地使用税",
+            "ysywlx": "土地面积",
+            "tdxx": "土地1",
+            "tdlb": "一线城市",
+            "sq_yssrsbz_a1": "",
+            "sq_ynsesbz_b1": "",
+            "sq_cyz1_f1": "",
+            "sq_tzsm": {"remark": "", "files": []},
+            "bq_yssrtmis_a": "18000",
+            "bq_yssrsbz_a1": "18000",
+            "bq_ynsetmis_b": "216",
+            "bq_ynsesbz_b1": "216",
+            "bq_jzse_c": "0",
+            "bq_cyz1_f": "0",
+            "bq_tzsm": {"remark": "", "files": []},
+            "status": "0"
+        },
+         {
+            "sl": "5%",
+            "sbywlx": "土地使用税",
+            "ysywlx": "土地面积",
+            "tdxx": "土地1",
+            "tdlb": "二线城市",
+            "sq_yssrsbz_a1": "",
+            "sq_ynsesbz_b1": "",
+            "sq_cyz1_f1": "",
+            "sq_tzsm": {"remark": "", "files": []},
+            "bq_yssrtmis_a": "1800",
+            "bq_yssrsbz_a1": "1800",
+            "bq_ynsetmis_b": "21.6",
+            "bq_ynsesbz_b1": "21.6",
+            "bq_jzse_c": "0",
+            "bq_cyz1_f": "0",
+            "bq_tzsm": {"remark": "", "files": []},
+            "status": "0"
+        },
+         {
+            "sl": "3%",
+            "sbywlx": "土地使用税",
+            "ysywlx": "土地面积",
+            "tdxx": "土地1",
+            "tdlb": "三线城市",
+            "sq_yssrsbz_a1": "",
+            "sq_ynsesbz_b1": "",
+            "sq_cyz1_f1": "",
+            "sq_tzsm": {"remark": "", "files": []},
+            "bq_yssrtmis_a": "400",
+            "bq_yssrsbz_a1": "40",
+            "bq_ynsetmis_b": "16",
+            "bq_ynsesbz_b1": "1.6",
+            "bq_jzse_c": "0",
+            "bq_cyz1_f": "14.4",
+            "bq_tzsm": {"remark": "", "files": []},
+            "status": "0"
+        }
+    ]
+}

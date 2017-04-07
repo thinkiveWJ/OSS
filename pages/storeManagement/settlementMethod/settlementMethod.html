@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.getDictionaryData.js"></script>
+<style type="text/css">
+.pay-info-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.pay-choose-channel input[type='radio']{vertical-align:middle;}
+.pay-choose-channel  .channel-details{margin:12px auto;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	indexLookInfo=true,
+	listUrl = "../../../payMode/showStoreInfoWithPayMode.do",
+	queryPayFuncUrl="../../../payMode/showPayModeList.do",
+	queryPayFuncInfoUrl="../../../payMode/showStorePayMode.do",
+	queryPayChannelUrl="../../../payMode/showPayChannel.do",
+	updateChannelUrl="../../../payMode/updateStorePayMode.do";
+	
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				var postData={storeName:$("#fastQueryText").val(),payModeId:""};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch:function(){
+				var postData={};
+				var storeName=$("#storeSearch").val();
+				var payModeID=$("#payFuncSearch").data("chosen").selectedItem();
+				payModeID=payModeID?payModeID["value"]:"";
+				postData={storeName:storeName,payModeId:payModeID};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			historyBackBTN:function(){
+				hideSlidePanel('.pay-info-panel');
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'storeName',autoWidth : true,align:"center"}, 
+			     			{name : 'machineName',autoWidth : true,align : "center"},
+			     			{name : 'storeAddr',autoWidth : true,align:"center"},
+			     			{name : '',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="lookButton(\''+arg3.posId+'\')">查看</button>';
+			     			}}
+			     			], 
+			     			_colNames = [' ', '门店名称', 'POS编号','门店地址', '自定义收款类型'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		//初始化搜索支付方式
+		initSelectData();
+	});
+	/******初始化搜索支付方式***/
+	function initSelectData(){
+		POST(queryPayFuncUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows;
+			for(var i in result){
+				result[i]={text:result[i].payModeName,value:result[i].payModeId};
+			}
+			result.unshift({text:"",value:""});
+			$("#payFuncSearch").data("chosen")._clearOptions();
+			$("#payFuncSearch").data("chosen")._addOptions(result);
+		});
+	}
+	/*****点击查看按钮*****/
+	function lookButton(posId){
+		showSlidePanel(".pay-info-panel",function(){
+			initPayInfo(posId);
+			var $hpanel=$(".pay-info-panel .page-content"),$tx=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv"),$tx2=$hpanel.find(".ui-jqgrid-pager"),
+			w=$hpanel.width(),h=$hpanel.height()-12-30-$tx.height()-$tx2.height();
+      	   $tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+		});
+	}
+	/***填充数据******/
+	function initPayInfo(posId){
+		listId="#payInfoContentList";
+		pagerId="#pagerPayInfo";
+		if(indexLookInfo!=true){
+			window.$tlist=$(listId).jqGrid("setGridParam", {page:1,url:queryPayFuncInfoUrl,postData:{posId:posId}}).hideCol("somecol").trigger("reloadGrid");
+			return;
+		}
+		indexLookInfo=false;
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'payModeName',width : 250,align:"center",}, 
+			     			{name : '',width : 200,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return $.fn.getDictionary("payChannel",arg3.payChannel);
+			     			}},
+			     			{name : 'modifyDate',autoWidth : true,align:"center",}, 
+			     			{name : '',width : 200,align : "center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="choosePayFuncButton(\''+arg3.posId+'\',\''+arg3.payChannel+'\')">选择支付渠道</button>';
+			     			}}
+			     			];
+			     			_colNames = [' ','支付方式', '支付渠道', '最后修改时间', '操作'];
+	   window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url:queryPayFuncInfoUrl,postData:{posId:posId},colNames : _colNames,colModel : _colModel,pager:pagerId}));
+	}
+	/*****点击选择支付渠道*****/
+	function choosePayFuncButton(posId,payChannel){
+		POST(queryPayChannelUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows,str="";
+			for(var i in result){
+				str+='<div class="channel-details"><label for="'+result[i].pmValue+
+				'"><input name="channel" id="'+result[i].pmValue+'" type="radio"/>'+result[i].pmName+'</label></div>';
+			}
+			$("#channelDetails").html(str);
+			$("#channelDetails .channel-details input[id='"+payChannel+"']").attr("checked",true);
+			$(".pay-choose-channel").dialog({
+				width:400,
+				modal:true,
+				buttons:[
+				         {
+				        	text:"保存",
+				        	click:function(){
+				        		var payChannel=$("#channelDetails .channel-details input[type='radio']:checked").attr("id");
+				        		POST(updateChannelUrl,JSON.stringify({payChannel:payChannel,posId:posId}),function(result){
+				        			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			        					window.message({title:"提示信息",text: result.rspMsg});
+			        					return;
+			        				}
+				        			$(listId).trigger("reloadGrid");
+				        		});
+				        		$(this).dialog("close");
+				        	} 
+				         },
+				         {
+				        	 text:"取消",
+				        	 click:function(){
+				        		 $(this).dialog("close");
+				        	 }
+				         }
+				         ]
+			});
+		});
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var postData={storeName:$("#fastQueryText").val(),payModeId:""};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid");  
+	    }
+	}
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var postData={};
+			var storeName=$("#storeSearch").val();
+			var payModeID=$("#payFuncSearch").data("chosen").selectedItem();
+			payModeID=payModeID?payModeID["value"]:"";
+			postData={storeName:storeName,payModeId:payModeID};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid");  
+	    }
+	}
+	
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm">
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+<!-- 								<td style="padding-left: 30px;text-align:right;">门店编号：</td> -->
+<!-- 								<td><input style="width:136px;" type="text" name="manualNumber"/></td> -->
+								<td style="text-align:right;padding-left: 30px;">门店名称：</td>
+								<td>
+									<input type="text" id="storeSearch" onkeydown="return keyLogins(event)"/>
+								</td>
+								<td style="text-align:right;padding-left: 30px;">选择开通的支付方式：</td>
+								<td><select data-xtype="chosen" id="payFuncSearch" style="width:208px;"></select></td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+							<td class="buttons"></td>
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="fastQueryText" xdata-type="text" placeholder="可以输入门店名称查询" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- 查看自定义结算方式 -->
+	<div class="pay-info-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i>查看自定义类型</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+<!-- 					<button id="historyBackBTN"><i class="fa fa-check"></i>确定</button> -->
+					<button id="historyBackBTN"><i class="fa fa-hand-o-left"></i>返回</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content" style="padding:0px;">
+				<!-- 选择支付渠道 -->
+				<div class="pay-choose-channel" style='display:none'>
+					<div class="pay-channel-title">选择任一一种支付渠道：</div>
+					<div class="pay-channel-content" id="channelDetails" style="width:200px;margin:12px auto;">
+<!-- 						<div class="channel-details"><label for="1"><input name="channel" id="1" type="radio"/>快钱</label></div> -->
+<!-- 						<div class="channel-details"><label for="2"><input name="channel" id="2" type="radio"/>翼码</label></div> -->
+<!-- 						<div class="channel-details"><label for="3"><input name="channel" id="3" type="radio"/>喔噻</label></div> -->
+					</div>
+				</div>
+				<div class="history-content-title split"></div>
+				<table id="payInfoContentList"></table>
+				<div id="pagerPayInfo"></div>
+		    </div>
+		</div>
+	</div>
+</body>
+</html>

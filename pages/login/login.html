@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="theme/default/ui.custom.css" rel="stylesheet" />
+<link href="theme/default/ui.common.css" rel="stylesheet" />
+<link href="theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="theme/default/font.awesome.css" rel="stylesheet" />
+<link href="theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="theme/default/page.common.css" rel="stylesheet" />
+<link href="theme/default/page.storeManagement.css" rel="stylesheet"/>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/ui.custom.js"></script>
+<script type="text/javascript" src="js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="js/ui.autosearch.js"></script>
+<script type="text/javascript" src="js/ui.chosen.js"></script>
+<script type="text/javascript" src="js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="js/ui.common.js"></script>
+<script type="text/javascript" src="js/ui.custom.js"></script>
+<script type="text/javascript" src="js/jquery.validate.js"></script>
+<script type="text/javascript" src="js/page.common.js"></script>
+<style type="text/css">
+*{margin:0;padding:0;}
+a{text-decoration:none;cursor:pointer;}
+.page-list-panel div.background{width:100%;position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;
+ 	background-image: url(theme/default/images/loginBackground.png);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-origin: border-box}
+.login-panel{max-width:1000px;margin:80px auto 0;position:absolute;text-align:center;height:100%;z-index:5;
+	top:50%;margin-top:-365px;
+	left:50%;margin-left:-324px;
+}
+.login-panel .login-panel-detail {line-height:300px;margin:0 auto;}
+.login-panel .login-panel-detail img{margin:0 auto;max-width:100%;}
+.login-panel-detail-content{width:600px;margin:-50px auto 0;border-radius:5px;background:#fff;padding:24px;}
+.login-panel-detail-content h4{height:40px;line-height:40px;font-size:24px;}
+.login-panel-detail-content .input{font-size:16px;margin-top:24px;height:40px;line-height:40px;}
+.login-panel-detail-content .input input{line-height:30px;height:30px;display:inline-block;padding:3px;width:290px;}
+.login-panel-detail-content .input a{display:inline-block;width:300px;background:#00a06a;border-radius:3px;color:#fff;font-size:18px;}
+.login-panel-detail-content .input a:hover{background:#018659;}
+</style>
+<script type="text/javascript">
+	var editorFormId = "#editorForm",
+		loginUrl="user/login.do";
+
+	$(function() {
+// 		_initButtons();//from page.common.js
+// 		_initFormControls();//from page.common.js
+// 		_initValidateForXTypeForm();
+		window.message = function(opts) {
+			var set = $.extend({
+				text : "",
+				//icon : "info",
+				width : 355,
+				title : "提示"/*,
+				 buttonLabel: "确认"*/
+			}, opts), opt = $.extend({
+				close : function() {
+					$(this).dialog("destroy");
+				},
+				modal : true
+			}, set);
+			var html = ["<div title='", set.title, "' >", set.icon ? '<span class="ui-icon ui-icon-' + set.icon + '" style="float:left;margin-right:5px;"></span>' : "", set.text, "</div>"];
+
+	            return $(html.join("")).dialog(opt);
+		};
+	
+		$("#login").click(function(){
+			//清除所有sessionstorage
+			sessionStorage.clear(); 	
+			localStorage.clear();
+			loginFunc();
+		});
+	});
+	function loginFunc(){
+		var userName=$("#loginName").val();
+		var password=$("#loginPassword").val();
+		if(/^[\u4e00-\u9fa5]+$/.test(userName)!=true){
+			window.message({text:"请输入中文用户名！",title:"信息提示"});
+			return;
+		}
+		$.ajax({
+			"url":loginUrl,
+			"data": JSON.stringify({userName:userName,password:password}),
+			type:"post",
+			contentType: 'application/json',
+			dataType:"json",
+			success:function(result){
+				if(result.rspCode>0){
+					sessionStorage.setItem("userId",result['data']['userId']);
+					if(result.data&&result.data.modifyUserId){
+						sessionStorage.setItem("modifyUserId",result.data.modifyUserId);
+					}else{
+						sessionStorage.setItem("modifyUserId","");
+					}
+					if(result.data&&result.data.cityId){
+						sessionStorage.setItem("cityId",result.data.cityId);
+					}else{
+						sessionStorage.setItem("cityId","");
+					}
+					if(result.data&&result.data.userName){
+						sessionStorage.setItem("loginUserName", result.data.userName);
+					}else{
+						sessionStorage.setItem("loginUserName", "");
+					}
+					location.href="platform.do?v="+(new Date()).getTime()+"m"+Math.random();
+				}else{
+					window.message({text:"账号或密码错误！",title:"信息提示"});
+				}
+			}
+		});
+	}
+	function keyLogin(e){
+		var keynum="";
+		if(window.event){
+		  keynum = e.keyCode
+		}else if(e.which){
+		  keynum = e.which
+		 }
+		if (keynum == 13){
+	        loginFunc();
+	    }
+	}
+</script>
+</head>
+<body style="background:#006548;">
+	<div class="page-list-panel" style="background:#006548;">
+		<div class="background" ></div>
+		<div class="login-panel">
+			<div class="login-panel-detail">
+				<img src="theme/default/images/loginIcon.png"/>
+				<div class="login-panel-detail-content">
+					<h4>热风OSS后台系统</h4>
+					<div class="input"><input type="text" id="loginName" placeholder="请输入用户名"  onkeydown="return keyLogin(event)"/></div>
+					<div class="input"><input type="password" id="loginPassword"  onkeydown="return keyLogin(event)" placeholder="请输入密码"/></div>
+					<div class="input"><a id="login">登录</a></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../../theme/default/ui.pick.css" rel="stylesheet" />
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/ui.pick.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadPics.js"></script>
+<script type="text/javascript" src="../../../js/ui.slidePic.js"></script>
+<style type="text/css">
+.history-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content{border-collapse:separate;border-spacing:24px;} 
+input{vertical-align:middle;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	imageFilesArr=[],videoFilesArr =[],
+	loadUrl = "../../../screen/showStoreSecondScreenList.do",
+	saveInfoUrl="../../../screen/saveStoreSecondScreen.do";
+	$(function() {
+		_initButtons({
+			secondScreenBTN:function(){
+				$("#step1Panel").show();
+				$(".text-panel").html("");
+				$(".text-panel").attr("title","");
+				//初始化不可选或不可填并清空一切
+				initSelectInputFunc();
+				sessionStorage.setItem("treeCheckedFlag","true");
+				showSlidePanel(".page-editor-panel");
+			},
+			nextStep1:function(){
+				if($(".text-panel").text()==""){
+					window.message({text:"请选择有效范围！",title:"提示信息"});
+					return;
+				}else if($("#downTime").val()==""){
+					window.message({text:"请选择下派时间！",title:"提示信息"});
+					return;
+				}
+				$("#step1Panel").hide();
+				$("#screenContentPanel").show();
+			},
+			cancelBTN1:function(){
+				hideSlidePanel(".page-editor-panel",hidePanelFunc);
+			},
+			cancelBTN2:function(){
+				hideSlidePanel(".page-editor-panel",hidePanelFunc);
+			},
+			cancelBTN3:function(){
+				hideSlidePanel(".page-editor-panel",hidePanelFunc);
+			},
+			cancelBTN4:function(){
+				hideSlidePanel(".page-editor-panel",hidePanelFunc);
+			},
+			prevStep2:function(){
+				$("#step1Panel").show();
+				$("#screenContentPanel").hide();
+			},
+			nextStep2:function(){
+				$("#screenContentPanel").hide();
+				$("#showGGModelOne").html($("#editAdvertisement").val());
+				$("#showGGModelTwo").html($("#editAdvertisement").val());
+				if($("#modelOne").attr("checked")=="checked"){
+					$("#screenModelPanelOne").show();
+					fillImagesBox();
+				}else{
+					$("#screenModelPanelTwo").show();
+					fillImagesBox();
+				}
+			},
+			prevStep3:function(){
+				$("#screenModelPanelOne").hide();
+				$("#screenContentPanel").show();
+			},
+			saveModelOne:function(){
+				if($("#chooseVideo").is(":checked")||$("#choosePic").is(":checked")){
+					$("#videoUploadForm").submit();
+					hideSlidePanel(".page-editor-panel",hidePanelFunc);
+					$(listId).trigger("reloadGrid");
+				}else{
+					var filePath="";
+					submitFunc(filePath);
+				}
+			},
+			prevStep4:function(){
+				$("#screenModelPanelTwo").hide();
+				$("#screenContentPanel").show();
+			},
+			saveModelTwo:function(){
+				if($("#chooseVideo").is(":checked")||$("#choosePic").is(":checked")){
+					$("#videoUploadForm").submit();
+					hideSlidePanel(".page-editor-panel",hidePanelFunc);
+					$(listId).trigger("reloadGrid");
+				}else{
+					var filePath="";
+					submitFunc(filePath);
+				}
+			},
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'regionName',width : 150,align:"center"}, 
+			     			{name : 'cityName',width : 200,align:"center"},
+			     			{name : 'districtName',autoWidth : true,align:"center"}, 
+			     			{name : 'storeName',width : 150,align : "center"},
+			     			{name : 'templateId',width : 150,align : "center"},
+			     			{name : 'settingStatus',autoWidth : true,align:"center"},
+			     			{name : 'dispatchDate',width : 150,align:"center"}, 
+			     			], 
+
+			     			_colNames = [' ','区域', '城市', '城区', '门店名称', '二屏模板','状态','最新下派时间'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url:loadUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		//选中选择照片
+		$("#choosePic").change(function(){
+			if($(this).is(":checked")){
+				$("#uploadPicBTN").removeClass("on");
+				$("#uploadPics").show();
+				$("#picTimesInput").attr("disabled",false);
+				$("#picShowSelect").data("chosen")._enabled();
+			}else{
+				$("#uploadPicBTN").addClass("on");
+				$("#uploadPics").hide();
+				$("#picTimesInput").attr("disabled",true);
+				$("#picShowSelect").data("chosen")._disabled();
+				$("#uploadPicBoxs").html("");
+				$("#picTimesInput").val("");
+			}
+		});
+		//选中上传视频
+		$("#chooseVideo").change(function(){
+			if($(this).is(":checked")){
+				$("#uploadVideoBTN").removeClass("on");
+				$("#videoUpload").show();
+				$("#videoShowSelect").data("chosen")._enabled();
+			}else{
+				$("#uploadVideoBTN").addClass("on");
+				$("#videoUpload").hide();
+				$("#videoShowSelect").data("chosen")._disabled();
+				$("#videoUploadBox").html("");
+				
+			}
+		});
+		//初始化不可选或不可填并清空一切
+		initSelectInputFunc();
+		//上传视频
+		uploadPics();
+		$("#modelTwo").change(function(){
+			if($(this).is(":checked")){
+				$("#modelPICS").attr("src","../../../theme/default/images/modelTwo.jpg");
+			}
+		});
+		$("#modelOne").change(function(){
+			if($(this).is(":checked")){
+				$("#modelPICS").attr("src","../../../theme/default/images/modelOne.jpg");
+			}
+		});
+	});
+	/****填充图片的轮播***/
+	function fillImagesBox(){
+		var srcArr=[];
+		$("#pic-boxOne").html('<ul class="picBoxUl" id="picBoxUlModelOne"></ul>');
+		$("#pic-boxTwo").html('<ul class="picBoxUl" id="picBoxUlModelTwo"></ul>');
+		for(var i=0;i<$("#uploadPicBoxs img").length;i++){
+			$("#picBoxUlModelOne").append('<li class="left"><img src="'+$("#uploadPicBoxs img")[i].src+'"/></li>');
+			$("#picBoxUlModelTwo").append('<li class="left"><img src="'+$("#uploadPicBoxs img")[i].src+'"/></li>');
+		}
+		$("#picBoxUlModelOne").append('<div class="clearfix"></div>');
+		$("#picBoxUlModelTwo").append('<div class="clearfix"></div>');
+		//轮播图
+		var time=Number($("#picTimesInput").val()+"")*1000;
+		time=time<=1000?1000:time;
+		if($("#picBoxUlModelOne li").length>0&&$("#picShowSelect").data("chosen").selectedItem()["value"]=="1"){
+			$.fn.rightPicShow($("#picBoxUlModelTwo"),"200",time);
+			$.fn.rightPicShow($("#picBoxUlModelOne"),"200",time);
+		}
+		if($("#picBoxUlModelOne li").length>0&&$("#picShowSelect").data("chosen").selectedItem()["value"]=="2"){
+			var timeInterval=$("#picTimesInput").val();
+			timeInterval=timeInterval>1?timeInterval*1000:1000;
+			$("#picBoxUlModelOne").css({'width': 200 * $("#picBoxUlModelOne li").length,"left":0});
+			$("#picBoxUlModelTwo").css({'width': 200 * $("#picBoxUlModelTwo li").length,"left":0});
+			var setTimesSlides=setInterval(function(){
+				$("#picBoxUlModelOne").animate({ left: '-=' +200 }, 600,function(){
+					if($("#picBoxUlModelOne").css('left')==-200*($("#picBoxUlModelOne li").length-1)+"px"){
+						clearInterval(setTimesSlides);
+					}
+				});
+				$("#picBoxUlModelTwo").animate({ left: '-=' +200 }, 600,function(){
+					if($("#picBoxUlModelTwo").css('left')==-200*($("#picBoxUlModelTwo li").length-1)+"px"){
+						clearInterval(setTimesSlides);
+					}
+				});
+			},timeInterval);
+			
+		}
+	}
+	/****hide panel时候触发的方法****/
+	function hidePanelFunc(){
+		$("#step1Panel").hide();
+		$('#screenContentPanel').hide();
+		$("#screenModelPanelOne").hide();
+		$("#screenModelPanelTwo").hide();
+	}
+	/**************初始化不可选或不可填*********/
+	function initSelectInputFunc(){
+		$("#uploadPics").hide();
+		$("#videoUpload").hide();
+		$("#choosePic").attr("checked",false);
+		$("#chooseVideo").attr("checked",false);
+		$("#picShowSelect").data("chosen")._disabled();
+		$("#videoShowSelect").data("chosen")._disabled();
+		$("#uploadPicBTN").addClass("on");
+		$('#uploadVideoBTN').addClass("on");
+		$("#downTime").val("");
+		$("#modelOne").attr("checked",true);
+		$("#editAdvertisement").val("");
+		$('#uploadPicBoxs').html("");
+		$("#picTimesInput").val("");
+		$("#videoUploadBox").html("");
+		
+	}
+	/*******上传视频*****/
+	function uploadPics(){
+		$("#uploadPics").change(function(){
+			for(var i=0;i<this.files.length;i++){
+				imageFilesArr.push(this.files[i].name);
+			}
+			setImagePreviews("uploadPics","uploadPicBoxs");
+		});
+		$("#videoUpload").change(function(){
+			videoFilesArr.push(this.files[0].name);
+			var videoUrl=$(this)[0].value;
+			var videoName=videoUrl.substring(videoUrl.lastIndexOf(".")).toLocaleUpperCase();
+			if(!/\.(AVI|MP4)$/.test(videoName)){
+				window.message({text:"请选择avi或mp4格式的视频！",title:"提示信息"});
+				return;
+			}
+			$("#videoUploadBox").html(videoUrl.substring(videoUrl.lastIndexOf("\\")+1));
+		});
+	}
+	function saveReport() {   
+	    // jquery 表单提交   
+	    $("#videoUploadForm").ajaxSubmit(function(message) {   
+	          // 对于表单提交成功后处理，message为提交页面saveReport.htm的返回内容   
+	    	submitFunc(message.filePath);
+	       });   
+	    return false; // 必须返回false，否则表单会自己再做一次提交操作，并且页面跳转   
+	}  
+	/*****完成 提交（预览模板1预览模板2）********/
+	function submitFunc(filePath){
+// 		$("#leftTreePageInput").val($(".text-panel").attr("idVal"));
+// 		$("#dispatchDateInput").val($("#downTime").val());
+// 		if($("#modelOne").is(":checked")){
+// 			$("#templateIdInput").val("1");
+// 		}else{
+// 			$("#templateIdInput").val("2");
+// 		}
+// 		if($("#choosePic").is(":checked")){
+// 			 $("#imagePlayTypeInput").val($("#picShowSelect").data("chosen").selectedItem()["value"]);
+// 		}
+// 		if($("#chooseVideo").is(":checked")){
+// 			$("#videoPlayTypeInput").val($("#videoShowSelect").data("chosen").selectedItem()["value"]);
+// 		}
+// 		$("#welcomeContentInput").val($("#editAdvertisement").val());
+// 		$("#imageChangeIntervalInput").val($("#picTimesInput").val());
+		
+// 		$("#videoUploadForm").submit();
+// 		var idsArr=$(".text-panel").attr("idval").split(",");
+		var idsArr=$("#treeInputVal").val();
+		if(idsArr==''||idsArr==null){
+			idsArr=[];
+		}else{
+			idsArr=idsArr.split(",");
+		}
+		var regionIds="",cityIds="",districtIds="",storeIds="";
+		for(var i=0;i<idsArr.length;i++){
+			if(idsArr[i].indexOf("storeId")>-1){
+				storeIds+=idsArr[i].split("_")[0]+",";
+			}else if(idsArr[i].indexOf("districtId")>-1){
+				districtIds+=idsArr[i].split("_")[0]+",";
+			}else if(idsArr[i].indexOf("cityId")>-1){
+				cityIds+=idsArr[i].split("_")[0]+",";
+			}else if(idsArr[i].indexOf("regionId")>-1){
+				regionIds+=idsArr[i].split("_")[0]+",";
+			}
+		}
+		if(regionIds){
+			regionIds=regionIds.substring(0,regionIds.length-1);
+		}
+		if(cityIds){
+			cityIds=cityIds.substring(0,cityIds.length-1);
+		}
+		if(districtIds){
+			districtIds=districtIds.substring(0,districtIds.length-1);
+		}
+		if(storeIds){
+			storeIds=storeIds.substring(0,storeIds.length-1);
+		}
+		var dispatchDate=$("#downTime").val();
+		var templateId="";
+		if($("#modelOne").is(":checked")){
+			templateId="1";
+		}else{
+			templateId="2";
+		}
+		
+		var welcomeContent=$("#editAdvertisement").val();
+		var ecommend="";
+		var imagePlayType="",imageChangeInterval=""
+		if($("#choosePic").is(":checked")){
+			 imageChangeInterval=$("#picTimesInput").val();
+			 imagePlayType=$("#picShowSelect").data("chosen").selectedItem()["value"];
+		}
+		var videoPlayType="";
+		if($("#chooseVideo").is(":checked")){
+			videoPlayType=$("#videoShowSelect").data("chosen").selectedItem()["value"];
+		}
+		var dataJson={storeIds:storeIds,districtIds:districtIds,cityIds:cityIds,regionIds:regionIds,imageFiles :imageFilesArr,videoFiles: videoFilesArr,data:{filePath:filePath,dispatchDate:dispatchDate,templateId:templateId,welcomeContent:welcomeContent,ecommend:ecommend,imagePlayType:imagePlayType,
+			imageChangeInterval:imageChangeInterval,videoPlayType:videoPlayType}};
+		POST(saveInfoUrl,JSON.stringify(dataJson),function(resultData){
+			if(resultData.rspCode&&resultData.rspCode<=0){
+				if(resultData.rspCode&&resultData.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: resultData.rspMsg});
+				return;
+			}
+			hideSlidePanel(".page-editor-panel",hidePanelFunc);
+			$(listId).trigger("reloadGrid");
+		});
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="secondScreenBTN">第二屏编辑</button></td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	
+	<!-- 第二屏编辑 -->
+	<div class="page-editor-panel full-drop-panel">
+		<!-- 编辑模板头部step1 -->
+		<div id="step1Panel">
+			<div class="title-bar step1">
+				<h4><i class="fa fa-plus"></i></h4>
+				<div class="btn-area">
+					<div style="margin-top: 4px;">
+						<button id="nextStep1" ><i class="fa fa-hand-o-right"></i>下一步</button>
+						<button id="cancelBTN1"><i class="fa fa-times"></i>取消</button>
+					</div>
+				</div>
+			</div>
+			<!-- 编辑模板具体内容step1 -->
+			<div class="page-content step1">
+				<div class="second-screen-content">
+					<table class="second-screen-content-table">
+						<tr><td class="content-right">有效范围：</td>
+							<td id="leftTreePage">
+								<input data-url="./pages/storeManagement/secondScreen/leftTree.html" data-xtype="pick" data-dialogWidth="600" data-dialogHeight="600" style="width:300px;" >
+							</td>
+						</tr>
+						<tr><td class="content-right">设置下派时间：</td><td><input id="downTime"  data-xtype="datetime" style="width:300px;;"/></td></tr>
+						<tr><td class="content-right">选择模板：</td>
+							<td>
+								<label ><input type="radio" id="modelOne" checked name="model"/>模板1</label>
+								<label style="margin-left:12px;"><input id="modelTwo" type="radio" name="model"/>模板2</label>
+							</td>
+						</tr>
+						<tr><td></td><td><img id="modelPICS" src="../../../theme/default/images/modelOne.jpg" style="width:308px;height:270px;"/></td></tr>
+					</table>
+				</div>
+			</div>
+		</div>
+		<!-- 第二屏内容设定 -->
+		<div id="screenContentPanel" style="display:none" class="screen-content-panel">
+			<div class="title-bar step1">
+				<h4><i class="fa fa-plus"></i></h4>
+				<div class="btn-area">
+					<div style="margin-top: 4px;">
+						<button id="prevStep2" ><i class="fa fa-hand-o-left"></i>上一步</button>
+						<button id="nextStep2" ><i class="fa fa-hand-o-right"></i>下一步(预览)</button>
+						<button id="cancelBTN2"><i class="fa fa-times"></i>取消</button>
+					</div>
+				</div>
+			</div>
+			<!-- 编辑模板具体内容step2 -->
+			<div class="page-content">
+				<div class="second-screen-content">
+					<div class="second-screen-content-tr">1、编辑广告文字</div>
+					<div class="second-screen-content-tr"><textarea id="editAdvertisement" name="welcomeContent" style="width:200px;height:80px;border:1px solid #ccc;padding:3px;"></textarea></div>
+					<div class="second-screen-content-tr">2、<label><input type="checkbox" id="choosePic"/>选择图片</label></div>
+					<form action="../../../file/screenUpload.do" id="videoUploadForm" method="post" enctype="multipart/form-data;"  onsubmit="return saveReport();">
+<!-- 						<input type="hidden" name="storeIds" id="leftTreePageInput"/> -->
+<!-- 						<input type="hidden" name="dispatchDate" id="dispatchDateInput"/> -->
+<!-- 						<input type="hidden" name="templateId" id="templateIdInput"/> -->
+<!-- 						<input type="hidden" name="imagePlayType" id="imagePlayTypeInput"/> -->
+<!-- 						<input type="hidden" name="videoPlayType" id="videoPlayTypeInput"/> -->
+<!-- 						<input type="hidden" name="welcomeContent" id="welcomeContentInput"/> -->
+<!-- 						<input type="hidden" name="imageChangeInterval" id="imageChangeIntervalInput"/> -->
+					
+						<div class="second-screen-content-tr" style="position:relative;">
+							<a class="upload-pic on" id="uploadPicBTN" style="z-index:5;">上传图片</a>
+							<input type="file" id="uploadPics" name="imageFiles" multiple="true" style="display:inline-block;cursor:pointer;position:absolute;top:0;left:0;width:80px;height:30px;opacity:0;filter:Alpha(opacity=0);"/>
+						</div>
+						<div class="second-screen-content-tr" id="uploadPicBoxs">
+	<!-- 						<img src="../1.png"/><img src="../1.png"/><img src="../1.png"/><img src="../1.png"/><img src="../1.png"/><img src="../1.png"/> -->
+	<!-- 						<img src="../1.png"/><img src="../1.png"/><img src="../1.png"/><img src="../1.png"/><img src="../1.png"/><img src="../1.png"/> -->
+						</div>
+						<div class="second-screen-content-tr">广告图片切换时长（秒）<input type="text" name="imageChangeInterval" id="picTimesInput" disabled style="border:1px solid #ccc;padding:3px;width:200px;"/></div>
+						<div class="second-screen-content-tr" style="padding-left:94px;">播放频率
+							<select data-xtype="chosen" style="width:208px;" id="picShowSelect">
+								<option value="1">循环</option>
+								<option value="2">仅播放一次</option>
+							</select>
+						</div>
+						<div class="second-screen-content-tr">3、<label><input id="chooseVideo" type="checkbox"/>选择播放视频</label></div>
+						<div class="second-screen-content-tr">视频上传  格式：仅支持MP4，AVI格式</div>
+						<div class="second-screen-content-tr" style="position:relative;">
+							<a class="upload-pic on" id="uploadVideoBTN" style="z-index:5;">上传视频</a>
+							<input type="file" name="videoFile" id="videoUpload" style="display:inline-block;cursor:pointer;position:absolute;top:0;left:0;width:80px;height:30px;opacity:0;filter:Alpha(opacity=0);"/>
+						</div>
+					</form>
+					<div class="second-screen-content-tr" id="videoUploadBox">
+<!-- 						<video controls="controls" src="../1.avi" style="width:600px;height:400px;"></video> -->
+					</div>
+					<div class="second-screen-content-tr">播放频率
+						<select data-xtype="chosen" style="width:208px;padding-left:94px;" id="videoShowSelect">
+							<option value="1">循环</option>
+							<option value="2">仅播放一次</option>
+						</select>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<!-- 预览模板1 -->
+		<div id="screenModelPanelOne" style="display:none" class="screen-content-panel">
+			<div class="title-bar step1">
+				<h4><i class="fa fa-plus"></i></h4>
+				<div class="btn-area">
+					<div style="margin-top: 4px;">
+						<button id="prevStep3" ><i class="fa fa-hand-o-left"></i>上一步</button>
+						<button id="saveModelOne" ><i class="fa fa-check"></i>完成</button>
+						<button id="cancelBTN3"><i class="fa fa-times"></i>取消</button>
+					</div>
+				</div>
+			</div>
+			<div class="page-content">
+				<div class="model-left">
+					<div class="title" id="showGGModelOne"></div>
+					<div class="pic-box" id="pic-boxOne">
+						<ul class="picBoxUl" id="picBoxUlModelOne">
+<!-- 							<li class="left"><img src="../../../theme/default/images/test_store.png"/></li> -->
+<!-- 							<li class="left"><img src="../../../theme/default/images/106261.png"/></li> -->
+<!-- 							<div class="clearfix"></div> -->
+						</ul>
+					</div>
+				</div>
+				<div class="model-right">
+					<div class="title-pic"><img src="../../../theme/default/images/test_store.png"/></div>
+					<table class="model-table-details" border="0" cellspacing="0" cellpadding="0" align="center">
+						<div style="margin:24px auto;line-height:50px;text-align:center;">购买商品<br/>收银价格</div>
+					</table>
+				</div>
+			</div>
+		</div>
+		
+		<!-- 预览模板2 -->
+		<div id="screenModelPanelTwo" style="display:none" class="screen-content-panel">
+			<div class="title-bar step1">
+				<h4><i class="fa fa-plus"></i></h4>
+				<div class="btn-area">
+					<div style="margin-top: 4px;">
+						<button id="prevStep4" ><i class="fa fa-hand-o-left"></i>上一步</button>
+						<button id="saveModelTwo" ><i class="fa fa-check"></i>完成</button>
+						<button id="cancelBTN4"><i class="fa fa-times"></i>取消</button>
+					</div>
+				</div>
+			</div>
+			<div class="page-content">
+				<table class="model-table-details" border="0" cellspacing="0" cellpadding="0" align="center">
+					<tr>
+						<td id="showGGModelTwo"></td>
+						<td><div style="margin:24px auto;line-height:50px;text-align:center;">购买商品<br/>收银价格</div></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td colspan="4">
+							<div class="pic-box" id="pic-boxTwo">
+								<ul class="picBoxUl" id="picBoxUlModelTwo">
+<!-- 									<li class="left"><img src="../../../theme/default/images/test_store.png"/></li> -->
+<!-- 									<li class="left"><img src="../../../theme/default/images/106261.png"/></li> -->
+<!-- 									<div class="clearfix"></div> -->
+								</ul>
+							</div>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

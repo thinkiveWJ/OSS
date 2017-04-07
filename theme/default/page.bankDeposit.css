@@ -1,0 +1,9 @@
+@charset "utf-8";
+ table.add-detail-panel{width:800px;margin:24px auto;}
+table.add-detail-panel tr{line-height:50px;}
+table.add-detail-panel tr td{font-size:16px;}
+table.add-detail-panel tr td input{padding:3px;}
+table.add-detail-panel td.tdRight{text-align:right;padding-right:5px;}
+ table.add-detail-panel tr td span.desc{position:absolute;top:30px;left:0;font-size:14px;color:#aaa;}
+.page-look-panel .look-search-head{height:36px;line-height:36px;border-bottom:1px solid #ccc;padding-left:48px;}
+.page-look-panel .look-search-head input{padding:3px;}

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<style type="text/css">
+.history-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.page-content .select{padding-left:24px;height:60px;line-height:60px;}
+table.single-table{width:100%;margin-top:24px;border:solid #ccc; border-width:1px 0px 0px 1px;text-align:center;}
+table.single-table td{border:solid #ccc; border-width:0px 1px 1px 0px;line-height:30px;}
+table.single-table td.ensure input{padding:0;height:20px;line-height:20px;text-indent:3px;margin-right:5px;}
+table.single-table td.ensure a{display:inline-block;width:60px;height:24px;line-height:24px;background:#01a06a;color:#fff;text-align:center;}
+table.single-table td.ensure a:hover{background:#018659;}
+table.single-table td.send a,table.single-table td.chonse-store a{display:inline-block;padding:0 12px;background:#01a06a;color:#fff;height:24px;line-height:24px;text-align:center;}
+table.single-table td.send a:hover,table.single-table td.chonse-store a:hover{background:#018659;}
+.page-editor-panel{position:relative;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	listUrl = "../../../manualSale/showPutStorage.do",
+	addSorageUrl="../../../manualSale/savePutStorage.do",
+	queryStartCodeUrl="../../../manualSale/getStorageBeginSaleId.do";
+	queryEditUrl="../../../manualSale/loadPutStorage.do",
+	editSaveUrl="../../../manualSale/updatePutStorage.do",
+	deleteUrl="../../../manualSale/deletePutStorage.do";
+
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				var postData={beginDate: "",endDate:"",beginSaleId:addend8($("#fastQueryText").val()),endSaleId:""};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch:function(){
+				var beginDate=$("#searchStartDate").val();
+				var beginSaleId=addend8($("#searchBeginCode").val());
+				var endSaleId=addend8($("#searchEndCode").val());
+				var endDate=$("#searchEndDate").val();
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{beginDate:beginDate,endDate:endDate,beginSaleId:beginSaleId,endSaleId:endSaleId}}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			exportBTN:function(){
+				$("#beginSaleIdInput").val(addend8($("#searchBeginCode").val()));
+				$("#endSaleIdInput").val(addend8($("#searchEndCode").val()));
+				$("#searchForm").submit();
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		$("#area").prop("disabled",true);
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'modifyDate',width : 150,align:"center"}, 
+			     			{name : '',width : 150,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return addend8(arg3.beginSaleId);//拼凑8位字符串
+			     			}},
+			     			{name : '',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return addend8(arg3.endSaleId);
+			     			}}, 
+			     			{name : 'saleCount',autoWidth : true,align : "center"},
+			     			{name : 'unSaleCount',width : 150,align:"center"},
+			     			{name : '',width : 150,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return (arg3.saleCount-arg3.unSaleCount);
+			     			}}, 
+			     			{name:'',width : 150,align:"center",
+			     				formatter:function(arg1,arg2,arg3){
+			     					if(arg3.saleCount==arg3.unSaleCount){
+			     						return '<button class="wj-jqgrid-button" onclick="detailButton(\''+arg3.batchNo+'\')">修改</button>'+
+		 			     						'<button class="wj-jqgrid-button" onclick="deteButton(\''+arg3.batchNo+'\')">删除</button>';
+			     					}
+			     					return '<button class="wj-jqgrid-button-disabled" disabled>修改</button>'+
+			     							'<button class="wj-jqgrid-button-disabled" disabled>删除</button>';
+	 			     			}	
+			     			}
+			     			], 
+			     			_colNames = ['','录入时间', '手工单起始号', '手工单终止号', '手工单数量', '未领取手工单数量','已领取数量','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		//手工单录入
+		$("#singleWrite").unbind('click').bind('click',function(){
+			$("#storageSave").html("入库");
+			$("#singStartCode").val("");
+			$("#singEndCode").val("");
+			$("#singStorageCount").html("入库份数(0)");
+// 			POST(queryStartCodeUrl,JSON.stringify({}),function(result){
+// 				var startCode=result.rspCode;
+// 				$("#singStartCode").val(startCode);
+			$(".single-page-content").dialog({modal:true,width:450});
+			//input change方法
+			funcClick();
+			funcList({flag:"save"});
+// 			})
+		});
+		$("#searchStartDate").datepicker({
+			onClose: function( selectedDate ) {
+		        $( "#searchEndDate" ).datepicker( "option", "minDate", selectedDate );
+		      }
+		});
+		$("#searchEndDate").datepicker({
+			onClose: function( selectedDate ) {
+		        $( "#searchStartDate" ).datepicker( "option", "maxDate", selectedDate );
+		      }
+		});
+	});
+	/****input change方法***/
+	function funcClick(){
+		var endCode,count,startCode;
+		$("#singEndCode").keyup(function(){
+			startCode=$("#singStartCode").val();
+			endCode=Number($(this).val()+"");
+			count=endCode-startCode+1;
+			count=count>0?count:0;
+			$("#singStorageCount").html("入库份数("+count+")");
+		});
+		$("#singStartCode").keyup(function(){
+			endCode=$("#singEndCode").val();
+			startCode=Number($(this).val()+"");
+			count=endCode-startCode+1;
+			count=count>0?count:0;
+			$("#singStorageCount").html("入库份数("+count+")");
+		});
+	}
+	/****点击修改****/
+	function detailButton(batchNo){
+		POST(queryEditUrl,JSON.stringify({manualSaleBatchNo:batchNo}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			$(".single-page-content").dialog({modal:true,width:450});
+			$("#storageSave").html("确定");
+			var result=result.data;
+			$("#singStartCode").val(result.beginSaleId);
+			$("#singEndCode").val(result.endSaleId);
+			$("#singStorageCount").html("入库份数("+result.saleCount+")");
+			funcClick();//input change方法修改显示入库的分数的值
+			funcList({batchNo:batchNo,flag:"edit"});
+		});
+	}
+	/*****确定或入库或取消*****/
+	function funcList(flagString){
+		//点击取消
+		$("#storageCanle").unbind('click').bind('click',function(){
+			$(".single-page-content").dialog("close");
+		});
+		//点击确定或入库
+		$("#storageSave").unbind('click').bind('click',function(){
+			var startCode=$("#singStartCode").val()+"";
+			var endCode=$("#singEndCode").val()+"";
+			var count=endCode-startCode+1;
+			if(!/^[0-9]+$/.test(startCode)){
+				window.message({
+					text:"请输入有效的手工单起始号！",
+					title:"提示信息"
+				});
+				return;
+			}
+			if(startCode.length!=8){
+				window.message({
+					text:"请输入8位数的手工单起始号！",
+					title:"提示信息"
+				});
+				return;
+			}
+			if(!/^[0-9]+$/.test(endCode)){
+				window.message({
+					text:"请输入有效的手工单终止号！",
+					title:"提示信息"
+				});
+				return;
+			}
+			if(endCode.length!=8){
+				window.message({
+					text:"请输入8位数的手工单起始号！",
+					title:"提示信息"
+				});
+				return;
+			}
+			if(count<=0){
+				window.message({
+					text:"请输入的手工单终止号比起始号大！",
+					title:"提示信息"
+				});
+				return;
+			}
+			var dataArr={};
+			var url=""
+			if(flagString.flag=="save"){//入库
+				dataArr={data:{beginSaleId:startCode,endSaleId:endCode,saleCount:count}};
+				url=addSorageUrl;
+			}else if(flagString.flag=="edit"){//修改保存
+				dataArr={data:{beginSaleId:startCode,endSaleId:endCode,saleCount:count,batchNo:flagString.batchNo}};
+				url=editSaveUrl;
+				
+			}
+			POST(url,JSON.stringify(dataArr),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				$(".single-page-content").dialog("close");
+				$(listId).trigger("reloadGrid");
+			});
+		});
+	}
+	/****删除按钮**/
+	function deteButton(batchNo){
+		deleteInfoButton(deleteUrl,{manualSaleBatchNo:batchNo});
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        var postData={beginDate: "",endDate:"",beginSaleId:addend8($("#fastQueryText").val()),endSaleId:""};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid");  
+	    }
+	}
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var beginDate=$("#searchStartDate").val();
+			var beginSaleId=addend8($("#searchBeginCode").val());
+			var endSaleId=addend8($("#searchEndCode").val());
+			var endDate=$("#searchEndDate").val();
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{beginDate:beginDate,endDate:endDate,beginSaleId:beginSaleId,endSaleId:endSaleId}}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" method="post">
+						<input name="fileName" type="hidden" value="oss/findSaleBatchList.xlsx" />
+    					<input name="componentName" type="hidden" value="findSaleBatchList" />
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<input type="hidden"  name="beginSaleId" id="beginSaleIdInput"/>
+								<input type="hidden"  name="endSaleId" id="endSaleIdInput"/>
+								<td style="padding-left: 30px;text-align:right;">手工单起始号：<input  onkeydown="return keyLogins(event)" id="searchBeginCode" type="text" /></td>
+								<td style="padding-left: 30px;text-align:right;">手工单终止号：<input  id="searchEndCode" onkeydown="return keyLogins(event)" type="text" /></td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">
+									录入时间：
+									<input  onkeydown="return keyLogins(event)" name="beginDate"  id="searchStartDate"  />
+									-
+									<input  name="endDate"  onkeydown="return keyLogins(event)" id="searchEndDate"/>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td><button type="button" id="singleWrite">手工单入库</button></td>
+						<td class="buttons"><button id="exportBTN"><i class="fa fa-paperclip"></i>导出</button></td>
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="fastQueryText" xdata-type="text" placeholder="输入手工单起始号查询" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:160px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+		<div class="single-page-content hide">
+			<div class="single-write-panel">
+				<div class="single-content">
+					<div class="single-content-detail">
+						手工单起始号：<input id="singStartCode" value="" type="text"/>
+					</div>
+					<div class="single-content-detail">
+						手工单终止号：<input id="singEndCode" type="text"/>
+					</div>
+					<div class="single-content-detail" id="singStorageCount" style="color:#029f6a">入库份数(0)</div>
+				</div>
+				<div class="button">
+					<a class="left" id="storageSave">入库</a>
+					<a class="left" id="storageCanle">取消</a>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

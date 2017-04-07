@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/page.area.city.store.js"></script>
+<style type="text/css">
+ .set-income-type-panel .ui-jqgrid{ 
+ 	 left:0px; 
+ 	 border-top-width:0px; 
+     border-left-width: 0px; 
+     border-right-width: 0px; 
+     border-bottom-width: 0px; 
+ } 
+
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.page-content .select{padding-left:24px;height:60px;line-height:60px;}
+table.single-table{width:100%;margin-top:24px;border:solid #ccc; border-width:1px 0px 0px 1px;text-align:center;}
+table.single-table td{border:solid #ccc; border-width:0px 1px 1px 0px;line-height:30px;}
+table.single-table td.ensure input{padding:0;height:20px;line-height:20px;text-indent:3px;margin-right:5px;}
+table.single-table td.ensure a{display:inline-block;width:60px;height:24px;line-height:24px;background:#01a06a;color:#fff;text-align:center;}
+table.single-table td.ensure a:hover{background:#018659;}
+table.single-table td.send a,table.single-table td.chonse-store a{display:inline-block;padding:0 12px;background:#01a06a;color:#fff;height:24px;line-height:24px;text-align:center;}
+table.single-table td.send a:hover,table.single-table td.chonse-store a:hover{background:#018659;}
+.page-editor-panel{position:relative;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	indexLookInfo=true,//作为判断历史记录是否首次进入的标志true首次进入
+	queryArea="../../../org/findAllTheRegion.do",
+	queryCity="../../../org/findCityListByRegionId.do",
+	queryCityArea="../../../org/findDistrictListByCityId.do",
+	queryStore="../../../org/findStoreListByDistrictId.do",
+	queryIncomeTypeUrl="../../../findIncomeTypeList.do",
+	queryIncomeModeUrl="../../../findIncomeModeList.do",
+	listUrl = "../../../queryStoreNonOperaIncomeList.do",
+	deleteIncomeTypeUrl="../../../deleteIncomeType.do",
+	addIncomeTypeUrl="../../../addIncomeType.do";
+
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				var postData={storeId:"",incomeType:"",cityId:"",regionId:"",districtId:"",incomeMode: "",storeName:$("#fastQueryText").val()};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch:function(){
+				var postData={};
+				var regionId=$("#areaSearch").data("chosen").selectedItem();
+				var cityId=$("#citySearch").data("chosen").selectedItem();
+				var districtId=$("#cityAreaSearch").data("chosen").selectedItem();
+				var storeId=$("#storeSearch").data("chosen").selectedItem();
+				var incomeType=$("#incomeTypeSearch").data("chosen").selectedItem();
+				incomeType=incomeType?incomeType["value"]:"";
+				var incomeMode=$("#incomeModeSearch").data("chosen").selectedItem();
+				incomeMode=incomeMode?incomeMode["value"]:"";
+				if(storeId){
+					storeId=storeId["value"];
+					postData={storeId:storeId,incomeType:incomeType,cityId:"",regionId:"",districtId:"",incomeMode:incomeMode,storeName:""};
+				}else if(districtId){
+					districtId=districtId["value"];
+					postData={districtId:districtId,incomeType:incomeType,cityId:"",storeId:"",regionId:"",incomeMode:incomeMode,storeName:""};
+				}else if(cityId){
+					cityId=cityId["value"];
+					postData={cityId:cityId,incomeType:incomeType,districtId:"",storeId:"",regionId:"",incomeMode:incomeMode,storeName:""};
+				}else if(regionId){
+					regionId=regionId["value"];
+					postData={regionId:regionId,incomeType:incomeType,districtId:"",storeId:"",cityId:"",incomeMode:incomeMode,storeName:""};
+				}else{
+					postData={incomeType:incomeType,incomeMode:incomeMode,storeName:"",regionId:"",districtId:"",storeId:"",cityId:"",};
+				}
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			exportForm:function(){
+				var regionId=$("#areaSearch").data("chosen").selectedItem();
+				regionId=regionId?regionId["value"]:"";
+				$("#reginIdForm").val(regionId);
+				var cityId=$("#citySearch").data("chosen").selectedItem();
+				cityId=cityId?cityId["value"]:"";
+				var districtId=$("#cityAreaSearch").data("chosen").selectedItem();
+				districtId=districtId?districtId["value"]:"";
+				$("#districtIdForm").val(districtId);
+				var storeId=$("#storeSearch").data("chosen").selectedItem();
+				storeId=storeId?storeId["value"]:"";
+				$("#reginIdForm").val(regionId);
+				$("#cityIdForm").val(cityId);
+				$("#districtIdForm").val(districtId);
+				$("#storeIdForm").val(storeId);
+				var incomeType=$("#incomeTypeSearch").data("chosen").selectedItem();
+				incomeType=incomeType?incomeType["value"]:"";
+				var incomeMode=$("#incomeModeSearch").data("chosen").selectedItem();
+				incomeMode=incomeMode?incomeMode["value"]:"";
+				$("#incomeTypeForm").val(incomeType);
+				$("#incomeModeForm").val(incomeMode);
+				$("#searchForm").submit();
+			},
+			setIncomeType:function(){
+				showSlidePanel(".set-income-type-panel",function(){
+					//查询已有收入类型
+					queryIncomeType();
+					 var $hpanel=$(".set-income-type-panel .page-content"),$tx=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv"),
+					 $tx2=$hpanel.find(".ui-jqgrid-pager"),$tx3=$hpanel.find(".history-content-title"),
+					 w=$hpanel.width(),
+					 h=$hpanel.height()-$tx.height()-$tx2.height()-$tx3.height()-12;
+		        	 $tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+				});
+			},
+			historyBackBTN:function(){
+				hideSlidePanel(".set-income-type-panel",function(){
+					listId = "#list2";
+					pagerId = '#pager2';
+					$(listId).jqGrid("setGridParam", {page:1,url:listUrl}).hideCol("somecol").trigger("reloadGrid");
+					initIncomeTypeSelect();//初始化营业外收入类型
+					initIncomeModeSelect();//初始化收款类型
+				});
+			},
+			setIncomeTypeAddBTN:setIncomeTypeAddPanel
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'RegionName',width : 150,align:"center"}, 
+			     			{name : 'cityName',width : 150,align:"center"},
+			     			{name : 'districtName',autoWidth : true,align:"center"}, 
+			     			{name : 'storeName',autoWidth : true,align : "center"},
+			     			{name : 'incomeType',width : 150,align:"center"},
+			     			{name : 'incomeMode',width : 150,align:"center"}, 
+			     			{name:'incomeAmt',width : 150,align:"center",}
+			     			], 
+			     			_colNames = ['','区域', '城市', '城区', '门店', '收入类型','收款方式','收款金额'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		initAreaSearch(queryArea,queryCity,queryCityArea,queryStore);//初始化城市区域城区门店搜索条件的下拉框
+		initIncomeTypeSelect();//初始化营业外收入类型
+		initIncomeModeSelect();//初始化收款类型
+	});
+	/*****初始化营业外收入类型***/
+	function initIncomeTypeSelect(){
+		POST(queryIncomeTypeUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows;
+			for(var i in result){
+				result[i]={text:result[i].pmName,value:result[i].pmValue};
+			}
+			result.unshift({text:"",value:""});
+			$("#incomeTypeSearch").data("chosen")._clearOptions();
+			$("#incomeTypeSearch").data("chosen")._addOptions(result);
+		});
+	}
+	/*******初始化收款类型*********/
+	function initIncomeModeSelect(){
+		POST(queryIncomeModeUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows;
+			for(var i in result){
+				result[i]={text:result[i].pmName,value:result[i].pmValue};
+			}
+			result.unshift({text:"",value:""});
+			$("#incomeModeSearch").data("chosen")._clearOptions();
+			$("#incomeModeSearch").data("chosen")._addOptions(result);
+		});
+	}
+	/*********查询已有收入类型******/
+	function queryIncomeType(){
+		listId="#setIncomeTypeTable";
+		pagerId="#setIncomeTypePager";
+		var postData={};
+		if(indexLookInfo!=true){
+			window.$tlist=$(listId).jqGrid("setGridParam", {page:1,url:queryIncomeTypeUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid");
+			return;
+		}
+		indexLookInfo=false;
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'pmName',autoWidth:true,align:"center",}, 
+			     			{name:"",autoWidth:true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="deleteBTN(\''+arg3.pmValue+'\')">删除</button>';;
+			     				}
+			     			}
+			     			];
+			     			_colNames = [' ','收入类型', '操作'];
+	   window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url:queryIncomeTypeUrl,postData:postData,colNames : _colNames,colModel : _colModel,pager:pagerId}));
+	}
+	/****删除收入类型***/
+	function deleteBTN(PmValue){
+		deleteInfoButton(deleteIncomeTypeUrl,{incomeType:PmValue});
+	}
+	/****添加面板**/
+	function setIncomeTypeAddPanel(){
+		$("#addIncomeTypeVal").val("");
+		$("#addIncomePanel").dialog({
+			width:480,
+			modal:true,
+			buttons:[
+			        {
+			        	text:"保存",
+			        	click:function(){
+			        		var incomeTypeName=$("#addIncomeTypeVal").val();
+			        		POST(queryIncomeTypeUrl,JSON.stringify({}),function(result){
+			        			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			        				window.message({title:"提示信息",text: result.rspMsg});
+			        				return;
+			        			}
+			        			var result=result.rows;
+			        			var incomeTypeNameArr=[];
+			        			for(var i in result){
+			        				incomeTypeNameArr.push(result[i].pmName);
+			        			}
+			        			if($.inArray(incomeTypeName,incomeTypeNameArr)>-1){
+			        				window.message({text:"收入类型已存在！",title:"提示信息"});
+			        				return;
+			        			}
+			        			POST(addIncomeTypeUrl,JSON.stringify({incomeTypeName:incomeTypeName}),function(result){
+			        				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			        					window.message({title:"提示信息",text: result.rspMsg});
+			        					return;
+			        				}
+				        			$(listId).trigger("reloadGrid");
+				        			$("#addIncomePanel").dialog("close");
+				        		});
+			        		});
+			        	}
+			        },{
+			        	text:"取消",
+			        	click:function(){
+			        		$(this).dialog("close");
+			        	}
+			        }
+			        ]
+		});
+	}
+	function keyLogin(e){
+		var keynum="";
+		if(window.event){
+		  keynum = e.keyCode
+		}else if(e.which){
+		  keynum = e.which
+		 }
+		if (keynum == 13){
+			var postData={storeId:"",incomeType:"",cityId:"",regionId:"",districtId:"",incomeMode: "",storeName:$("#fastQueryText").val()};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" method="post">
+						<input name="fileName" type="hidden" value="oss/queryStoreNonOperaIncome.xlsx" />
+    					<input name="componentName" type="hidden" value="queryStoreNonOperaIncome" />
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" name="regionId" id="reginIdForm"/>
+									区域：<select data-xtype="chosen" style="width:208px;" id="areaSearch"></select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" name="cityId" id="cityIdForm"/>
+									城市：<select data-xtype="chosen" style="width:208px;" id="citySearch"></select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" name="districtId" id="districtIdForm"/>
+									城区：<select data-xtype="chosen" style="width:208px;" id="cityAreaSearch" ></select>
+								</td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" name="storeId" id="storeIdForm"/>
+									门店：<select data-xtype="chosen" style="width:208px;" id="storeSearch"></select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" name="incomeType" id="incomeTypeForm"/>
+									收入类型：<select data-xtype="chosen" style="width:208px;" id="incomeTypeSearch"></select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;"> 
+									<input type="hidden" name="incomeMode" id="incomeModeForm" />
+									收款方式：<select data-xtype="chosen" style="width:208px;" id="incomeModeSearch"></select>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td><button type="button" id="setIncomeType">设置收入类型</button></td>
+						<td class="buttons"><button id="exportForm"><i class="fa fa-paperclip"></i>导出</button></td>
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="fastQueryText" xdata-type="text" placeholder="输入门店名称查询" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:160px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- 设置收入类型 -->
+	<div class="set-income-type-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i>收入类型</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="setIncomeTypeAddBTN"><i class="fa fa-plus"></i>添加</button>
+					<button id="historyBackBTN"><i class="fa fa-hand-o-left"></i>返回</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content" style="padding:0px;">
+				<div class="history-content-title split">收入类型</div>
+				<table id="setIncomeTypeTable"></table>
+				<div id="setIncomeTypePager"></div>
+				<div id="addIncomePanel" style="display:none;line-height:30px;margin:12px;">
+					编辑新增加的收入类型&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" id="addIncomeTypeVal" style="dsiplay:inline-block;text-indent:3px;height:24px;"/>
+				</div>
+		    </div>
+		</div>
+	</div>
+</body>
+</html>

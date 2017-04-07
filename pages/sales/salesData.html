@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../theme/default/page.members.css" rel="stylesheet" />
+<link href="../../theme/default/page.sales.css" rel="stylesheet" />
+<link href="../../theme/default/ui.pick.css" rel="stylesheet" />
+<link href="../../theme/default/page.personManagement.css" rel="stylesheet"/>
+<link href="../../theme/default/ui.timepicker.addon.css" rel="stylesheet"/>
+<link href="../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../js/jquery.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/ui.timepicker.addon.js"></script>
+<script type="text/javascript" src="../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../js/page.common.js"></script>
+<script type="text/javascript" src="../../js/ui.pick.js"></script>
+
+<link rel="stylesheet" href="../../theme/default/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="../../js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="../../js/jquery.ztree.excheck.js"></script>
+<style type="text/css">
+	.t-left-panel{
+    background-color: white;
+    display: none;
+    height: 100%;
+    position: absolute;
+    width: 250px;
+    z-index: 2;
+    border-right:1px solid #ccc;
+    margin-top:35px;
+}
+.t-left-panel .toolbar{padding:12px;}
+.t-left-panel-title{height:30px;background:#018659;width:100%;}
+/* #treeDemo{height:200px;} */
+.t-left-panel .tree-button{position:absolute;buttom:0px;left:0;height:50px;width:236px;bakcground:#fca2ca;}
+.t-left-panel .tree-button a{width:95px;margin:10px 0 10px 12px ;height:30px;line-height:30px;text-align:center;color:#fff;background:#018659;}
+table.add-detail-step1-table .memberRadio label + label{margin-left:12px;}
+table.memer-radio-details td{height:24px;}
+input{vertical-align:middle;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2',
+	promotionIDAdd="",//点击新增的时候调用接口产生的值
+	chooseTableStep2Flag="",
+	chooseTableStep3Flag="",
+	pattern=/^[0-9]+([.]{1}[0-9]+){0,1}$/,
+	queryArea="../../org/findAllTheRegion.do",
+	queryCity="../../org/findCityListByRegionId.do",
+	queryCityArea="../../org/findDistrictListByCityId.do",
+	queryStore="../../org/findStoreListByDistrictId.do",
+	queryGoodsRelativeUrl="../../promotion/queryRelatedPromotionList.do",
+	listUrl = "../../promotion/queryPromotionList.do",
+	queryGoodsListUrl="../../style/findItemList.do",
+	saveSalesInfoUrl="../../promotion/savePromotion.do",
+	saveTypeItemUrl="../../style/saveTypeItem.do",
+	updateMaxAndMinQuyUrl="../../style/updateMaxAndMinQuy.do", 
+	findItemByPromotionIDUrl="../../style/findItemByPromotionID.do",
+	queryEditInfoUrl="../../promotion/getPromotion.do",
+	updateGiveCountUrl="../../style/updateGiveCount.do",
+	queryPromotionIdUrl="../../promotion/generatePromotionId.do";
+	$(function(){
+		_initButtons({
+			advancedSearch: advancedSearchFunc,
+			exportForm: exportFormFunc,
+			advancedAdd: function(){
+				//初始化按钮
+				$(".ul-li-buttons .step-one").show().siblings(".step-two").hide();
+				$(".sale-add-messages-panel").show().next(".sale-add-rules-panel").hide();
+				sessionStorage.setItem("treeCheckedFlag","true");
+				sessionStorage.setItem("flagTree","");
+				$(".page-add-panel .ul-li-header ul li:eq(0)").addClass("on").siblings().removeClass("on");
+				//清除所有数据
+				clearAllAddPanelData();
+				//获取promotionIDAdd
+				getPromotionIDAddFunc();
+			},
+			chooseSaveStep2: chooseSaveStep2Func,
+			chooseCancelStep2: function(){
+				hideSlidePanel('.page-add-step2-choose',function(){
+					sessionStorage.setItem("flagTree","false");//显示input id=treeInputVal picke
+				});
+			},
+			chooseSaveStep3: chooseSaveStep3Func,
+			chooseCancelStep3:function(){
+				hideSlidePanel('.page-add-step3-choose',function(){
+					sessionStorage.setItem("flagTree","false");//显示input id=treeInputVal picke
+				});
+			}
+		});
+		_initFormControls();//from page.common.js
+		_initValidateForXTypeForm();
+		//初始化查询方法
+		_initFunc();
+		//初始化城市区域城区门店搜索条件的下拉框
+		initAreaSearchSelect(queryArea,queryCity,queryCityArea,queryStore);
+	});
+	/******初始化查询方法******/
+	function _initFunc(){
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'promotionName',width : 200,align:"center"},
+			     			{name : 'storeRange',autoWidth : true,align : "center"}, 
+			     			{name : 'itemRange',width : 100,align : "center"},
+			     			{name : 'startDate',width : 260,align:"center",},
+			     			{name : 'expireDate',width : 250,align:"center",}, 
+			     			{name : 'promotionStatus',width : 200,align:"center"},
+			     			{name : '',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				if(arg3.promotionStatus=="未开始"){
+			     					return '<button class="wj-jqgrid-button" onclick="editButton(\''+arg3.promotionId+'\')">编辑</button>';
+			     				}
+			     				return '<button class="wj-jqgrid-button-disabled">编辑</button>';
+			     			}}, 
+			     			{name : 'createUserName',width : 100,align : "center"}
+			     		], 
+			     		_colNames = [' ', '促销名称', '生效范围', '商品范围', '生效时间','结束时间','状态','操作','操作人员'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		$("#saleAddObjBox .sale-message-box-val label input[type='radio']").unbind('change').bind('change',function(){
+			var index=$("#saleAddObjBox .sale-message-box-val label input[type='radio']").index(this);
+			if(index==0){
+				$("#saleAddObjContentBox").show();
+			}else{
+				$("#saleAddObjContentBox").hide();
+			}
+		});
+		/**截止日期**/
+		$("input[name='startDate']").datetimepicker({   
+			changeMonth: true,
+			changeYear: true,
+			timeFormat: '00:00:00',
+			stepHour: 1,
+			todayButton:false,
+			onClose: function( selectedDate ) {
+				$("input[name='expireDate']").datetimepicker( "option", "minDate", selectedDate );
+		    }
+		});
+		$("input[name='expireDate']").datetimepicker({
+			changeMonth: true,
+			changeYear: true,
+			timeFormat: '23:59:59',
+			stepHour: 1,
+			todayButton:false,
+			onClose: function( selectedDate ) {
+				$("input[name='startDate']").datetimepicker( "option", "maxDate", selectedDate );
+		    }
+		});
+		//选中ztree树查询商品列表
+		$(".choose-setp2-content2 .text-panel").focus(function(){
+			var data={};
+			data.isGiveGoods="1";
+			data.queryField=$(".choose-setp2-content2 .text-panel").attr("idval");
+			data.promotionID=promotionIDAdd;
+			POST(saveTypeItemUrl,JSON.stringify(data),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				fillChooseBuyDataStep2({promotionID: promotionIDAdd,isGiveGoods:"1"});
+			});
+		});
+		$(".choose-setp2-content3 .text-panel").focus(function(){
+			var data={};
+			data.isGiveGoods="2";
+			data.queryField=$(".choose-setp2-content3 .text-panel").attr("idval");
+			data.promotionID=promotionIDAdd;
+			POST(saveTypeItemUrl,JSON.stringify(data),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				fillChooseBuyDataStep3({promotionID: promotionIDAdd,isGiveGoods:"2"});
+			});
+		});
+		$("#promotionStart").unbind('change').bind('change',function(){
+			if($("#promotionEnd").val()!=''&&$(this).val()!=''&&$("#treeInputVal").attr("idvalTrue")!=''&&$("#chooseBuy").val()!=''){
+				$("#salesRelationship").show();
+		    	//查询促销关系
+		    	querySalesRelativeFunc();
+			}
+		});
+		$("#promotionEnd").unbind('change').bind('change',function(){
+			if($("#promotionStart").val()!=''&&$(this).val()!=''&&$("#treeInputVal").attr("idvalTrue")!=''&&$("#chooseBuy").val()!=''){
+				$("#salesRelationship").show();
+		    	//查询促销关系
+		    	querySalesRelativeFunc();
+			}
+		});
+		//选择门店
+		$(".area-rang .text-panel").bind('DOMNodeInserted', function(e) { 
+		    //促销关系变化
+		    var chooseBuy=$("#chooseBuy").val();
+		    if(chooseBuy!=''&&$("#promotionStart").val()!=""&&$("#promotionEnd").val()!=''){
+		    	$("#salesRelationship").show();
+		    	//查询促销关系
+		    	querySalesRelativeFunc();
+		    }
+		});
+		//选择商品
+		$("#chooseBuyHiden").bind('DOMNodeInserted', function(e) { 
+			if($("#treeInputVal").attr("idvalTrue")!=""&&$("#promotionStart").val()!=""&&$("#promotionEnd").val()!=''){
+				$("#salesRelationship").show();
+				//查询促销关系
+		    	querySalesRelativeFunc();
+			}
+		});
+	}
+	/*************查询促销关系*******/
+	function querySalesRelativeFunc(){
+		$('#saleRelative').html("");
+		var dataArr={},idsArr=[];
+		splitStoreIdFunc(dataArr);
+		var skuIdList=$("#chooseBuy").val();
+		dataArr.skuIdList=skuIdList.split(",");
+		dataArr.startDate=$("#promotionStart").val();
+		dataArr.expireDate=$("#promotionEnd").val();
+		dataArr.bigTypeIdList=[];
+		dataArr.middleTypeIdList=[];
+		dataArr.smallTypeIdList=[];
+		if($("#coexistenceFlag").is(":checked")){
+			dataArr.sharePromotionFlag="Y";
+		}else{
+			dataArr.sharePromotionFlag="N";
+		}
+		if($("#entireSingle").is(":checked")){
+			dataArr.additionalPromotionFlag="Y";
+		}else{
+			dataArr.additionalPromotionFlag="N";
+		}
+		if(dataArr&&(dataArr.regionIdList||dataArr.cityIdList||dataArr.districtIdList||dataArr.storeIdList)&&(dataArr.regionIdList.length>0||dataArr.cityIdList.length>0
+				||dataArr.districtIdList.length>0||dataArr.storeIdList.length>0)){
+			POST(queryGoodsRelativeUrl,JSON.stringify(dataArr),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				var result=result.rows;
+				var str='';
+				for(var i in result){
+					str+='<li>'+result[i].promotionName+'</li>'
+				}
+				$('#saleRelative').html(str);
+			});
+		}
+		
+	}
+	/****门店树分隔id*****/
+	function splitStoreIdFunc(dataArr){
+		var regionIds=[],cityIds=[],districtIds=[],storeIds=[];
+		var idsArr=$("#treeInputVal").val();
+		if(idsArr==''||idsArr==null){
+			idsArr=[];
+		}else{
+			idsArr=idsArr.split(",");
+		}
+		for(var i=0;i<idsArr.length;i++){
+			if(idsArr[i].indexOf("storeId")>-1){
+				storeIds.push(idsArr[i].split("_")[0]);
+			}else if(idsArr[i].indexOf("districtId")>-1){
+				districtIds.push(idsArr[i].split("_")[0]);
+			}else if(idsArr[i].indexOf("cityId")>-1){
+				cityIds.push(idsArr[i].split("_")[0]);
+			}else if(idsArr[i].indexOf("regionId")>-1){
+				regionIds.push(idsArr[i].split("_")[0]);
+			}
+		}
+		dataArr.storeIdList=storeIds;
+		dataArr.districtIdList=districtIds;
+		dataArr.cityIdList=cityIds;
+		dataArr.regionIdList=regionIds;
+		return dataArr;
+	}
+	/****多条件查询**********/
+	function advancedSearchFunc(){
+		var postData={};
+		var promotionName=$("#promotionNameSearch").val();
+		var startDate=$("#startDateSearch").val().split(" ")[0];
+		var startTime=$("#startDateSearch").val().split(" ")[1];
+		var expireDate=$("#endDateSearch").val().split(" ")[0];
+		var expireTime=$("#endDateSearch").val().split(" ")[1];
+		var districtId=$("#cityAreaSearch").data("chosen").selectedItem();
+		var cityId=$("#citySearch").data("chosen").selectedItem();
+		var regionId=$('#areaSearch').data("chosen").selectedItem();
+		var storeId=$("#storeSearch").data("chosen").selectedItem();
+		if(storeId){
+			storeId=storeId["value"];
+			districtId=districtId["value"],cityId=cityId["value"],regionId=regionId["value"];
+			postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,promotionName:promotionName,startDate:startDate,expireDate:expireDate}
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+		}else if(districtId){
+			districtId=districtId["value"];
+			cityId=cityId["value"],regionId=regionId["value"],storeId="";
+			postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,promotionName:promotionName,startDate:startDate,expireDate:expireDate}
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+		}else if(cityId){
+			cityId=cityId["value"];
+			regionId=regionId["value"],districtId="",storeId="";
+			postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,promotionName:promotionName,startDate:startDate,expireDate:expireDate}
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+		}else if(regionId){
+			regionId=regionId["value"];
+			cityId="",districtId="",storeId="";
+			postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,promotionName:promotionName,startDate:startDate,expireDate:expireDate}
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+		}else{
+			regionId="",cityId="",districtId="",storeId="";
+			postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,promotionName:promotionName,startDate:startDate,expireDate:expireDate}
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+		}
+	}
+	/******导出********/
+   function exportFormFunc(){
+		var areaForm=$("#areaSearch").data("chosen").selectedItem();
+		areaForm=areaForm?areaForm['value']:"";
+		$("#areaForm").val(areaForm);
+		var cityForm=$("#citySearch").data("chosen").selectedItem();
+		cityForm=cityForm?cityForm['value']:"";
+		$("#cityForm").val(cityForm);
+		var cityAreaForm=$("#cityAreaSearch").data("chosen").selectedItem();
+		cityAreaForm=cityAreaForm?cityAreaForm['value']:"";
+		$("#cityAreaForm").val(cityAreaForm);
+		var storeSearch=$("#cityAreaSearch").data("chosen").selectedItem();
+		storeSearch=storeSearch?storeSearch['value']:"";
+		$("#storeForm").val(storeSearch);
+		$("#searchForm").submit();
+	}
+   /******初始化城市区域城区门店的下拉列表***/
+	function initAreaSearchSelect(queryArea,queryCity,queryCityArea,queryStore){
+		POST(queryArea,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows;
+			var str="";areaName="",areaId="";
+			for(var i in result){
+				areaName=result[i].regionName;
+				areaId=result[i].regionId;
+				result[i]={text:areaName,value:areaId};
+			}
+			result.unshift({text:"请选择区域",value:""});
+			$("#areaSearch").data("chosen")._clearOptions();
+			$("#areaSearch").data("chosen")._addOptions(result);
+			$("#areaSearch").unbind("change").bind("change",function(){
+				var regionId=$("#areaSearch").data("chosen").selectedItem();
+				if(regionId){
+					regionId=regionId["value"];
+					$("#citySearch").data("chosen")._enabled();
+					$("#cityAreaSearch").data("chosen")._disabled();
+					$("#cityAreaSearch").data("chosen")._clearOptions();
+					$("#storeSearch").data("chosen")._disabled();
+					$("#storeSearch").data("chosen")._clearOptions();
+				}else{
+					$("#citySearch").data("chosen")._disabled();
+					$("#citySearch").data("chosen")._clearOptions();
+					$("#cityAreaSearch").data("chosen")._disabled();
+					$("#cityAreaSearch").data("chosen")._clearOptions();
+					$("#storeSearch").data("chosen")._disabled();
+					$("#storeSearch").data("chosen")._clearOptions();
+					return;
+				}
+				POST(queryCity,JSON.stringify({regionId:regionId}),function(result){
+					if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+						window.message({title:"提示信息",text: result.rspMsg});
+						return;
+					}
+					initCity(result,queryCityArea,queryStore);
+				});
+			});
+		});
+	}
+	/*****根据区域id选择城市****/
+	function initCity(result,queryCityArea,queryStore){
+		var result=result.rows;
+		var str="";cityName="",cityId="";
+		for(var i in result){
+			cityName=result[i].cityName;
+			cityId=result[i].cityId;
+			result[i]={text:cityName,value:cityId};
+		}
+		result.unshift({text:"请选择城市",value:""});
+		$("#citySearch").data("chosen")._clearOptions();
+		$("#citySearch").data("chosen")._addOptions(result);
+		$("#citySearch").unbind("change").bind("change",function(){
+			var cityId=$("#citySearch").data("chosen").selectedItem();
+			if(cityId){
+				cityId=cityId["value"];
+				$("#cityAreaSearch").data("chosen")._enabled();
+				$("#cityAreaSearch").data("chosen")._clearOptions();
+				$("#storeSearch").data("chosen")._disabled();
+				$("#storeSearch").data("chosen")._clearOptions();
+			}else{
+				$("#cityAreaSearch").data("chosen")._disabled();
+				$("#cityAreaSearch").data("chosen")._clearOptions();
+				$("#storeSearch").data("chosen")._disabled();
+				$("#storeSearch").data("chosen")._clearOptions();
+				return;
+			}
+			POST(queryCityArea,JSON.stringify({cityId:cityId}),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				initCityArea(result,queryStore);
+			});
+		});
+	}
+	/*****根据城市id查询城区******/
+	function initCityArea(result,queryStore){
+		var result=result.rows;
+		var str="";districtName="",districtId="";
+		for(var i in result){
+			districtName=result[i].districtName;
+			districtId=result[i].districtId;
+			result[i]={text:districtName,value:districtId};
+		}
+		result.unshift({text:"请选择城区",value:""});
+		$("#cityAreaSearch").data("chosen")._clearOptions();
+		$("#cityAreaSearch").data("chosen")._addOptions(result);
+		$("#cityAreaSearch").unbind("change").bind("change",function(){
+			var districtId=$("#cityAreaSearch").data("chosen").selectedItem();
+			if(districtId){
+				districtId=districtId["value"];
+				$("#storeSearch").data("chosen")._enabled();
+				$("#storeSearch").data("chosen")._clearOptions();
+			}else{
+				$("#storeSearch").data("chosen")._disabled();
+				$("#storeSearch").data("chosen")._clearOptions();
+				return;
+			}
+			POST(queryStore,JSON.stringify({districtId:districtId}),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				initStore(result);
+			});
+		});
+	}
+	/******根据城区查询门店******/
+	function initStore(result){
+		var result=result.rows;
+		var str="";storeName="",storeId="";
+		for(var i in result){
+			storeName=result[i].storeName;
+			storeId=result[i].storeId;
+			result[i]={text:storeName,value:storeId};
+		}
+		result.unshift({text:"请选择门店",value:""});
+		$("#storeSearch").data("chosen")._clearOptions();
+		$("#storeSearch").data("chosen")._addOptions(result);
+	}
+	/*******获取promotionIDAdd********/
+	function getPromotionIDAddFunc(){
+		POST(queryPromotionIdUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			promotionIDAdd=result.data.promotionId;//从张煜接口获取
+			showSlidePanel(".page-add-panel",advancedAddFunc);
+		});
+	}
+	/*****点击新增按钮******/
+	function advancedAddFunc(){
+		//是否新增的标识
+		window.top.addZtreeFlag={addStoreFlag: true,addGood1Flag: true,addGood2Flag: true};
+		window.editChoose1Sale={};
+		chooseTableStep2Flag="";
+		chooseTableStep3Flag="",
+		window.top.goodsInputDataJson={promotionID :promotionIDAdd,findItemByPromotionIDUrl: findItemByPromotionIDUrl};
+		//初始化新增促销的内容
+		_initAddSalesFunc();
+		//点击step按钮
+		bindStepFunc();
+		//输入值与选中的联动
+		inputLinkRadioFunc();
+		//是否与其他促销共存
+		coexistenceFlagFunc();
+		//获取焦点选择商品
+		focusChooseBuyGoodsFunc();
+	}
+	/***新增促销初始化********/
+	function _initAddSalesFunc(){
+		//促销时间段
+		$("#promotionStart").datetimepicker({
+			minDate: new Date(),
+			changeMonth: true,
+			changeYear: true,
+			timeFormat: '00:00:00',
+			stepHour: 1,
+			todayButton:false,
+		    onClose: function( selectedDate ) {
+				$("#promotionEnd").datetimepicker( "option", "minDate", selectedDate );
+		    }
+		});
+		$("#promotionEnd").datetimepicker({
+			minDate: new Date(),
+			changeMonth: true,
+			changeYear: true,
+			timeFormat: '23:59:59',
+			stepHour: 1,
+			todayButton:false,
+			changeMonth: true,
+		    onClose: function( selectedDate ) {
+				$("#promotionStart").datetimepicker( "option", "maxDate", selectedDate );
+		    }
+		});
+		$(".sale-obj label:eq(0) input[type='radio']").attr("checked",true).siblings("label").find("input[type='radio']").attr("checked",false);
+	}
+	/*******点击step按钮******/
+	function bindStepFunc(){
+		$("#stepOneNext").unbind('click').bind('click',function(){
+			if($("#salesName").val()==""){
+				window.message({text:"促销名称不能为空！",title:"提示信息"});
+				return;
+			}
+			if($("#promotionStart").val()==""){
+				window.message({text:"促销开始时间不能为空！",title:"提示信息"});
+				return;
+			}
+			if($("#promotionEnd").val()==""){
+				window.message({text:"促销结束时间不能为空！",title:"提示信息"});
+				return;
+			}
+			if($(".area-rang .text-panel").text()==""||$("#treeInputVal").attr("idvalTrue")==""){
+				window.message({text:"区域范围不能为空！",title:"提示信息"});
+				return;
+			}
+			if($("#chooseBuy").attr("title")==""){
+				window.message({text:"促销商品不能为空！",title:"提示信息"});
+				return;
+			}
+			$(".ul-li-buttons .step-one").hide().siblings(".step-two").show();
+			$(".sale-add-messages-panel").hide().next(".sale-add-rules-panel").show();
+			$(".page-add-panel .ul-li-header ul li:eq(1)").addClass("on").siblings().removeClass("on");
+		});
+		$("#stepOneCancel,#stepTwoCancel").unbind('click').bind('click',function(){
+			hideSlidePanel(".page-add-panel");
+		});
+		
+		$("#stepTwoPrev").unbind('click').bind('click',function(){
+			$(".ul-li-buttons .step-one").show().siblings(".step-two").hide();
+			$(".sale-add-messages-panel").show().next(".sale-add-rules-panel").hide();
+			$(".page-add-panel .ul-li-header ul li:eq(0)").addClass("on").siblings().removeClass("on");
+		});
+		$("#stepTwoSave").unbind('click').bind('click',function(){
+			//促销新增保存
+			saleAddSaveFunc();
+		});
+	}
+	/********输入值与选中的联动*********/
+	function inputLinkRadioFunc(){
+		$("input[type='text']").focus(function(){
+			$(this).parents("label").find("input[type='radio']").attr("checked","checked");
+		});
+	}
+	/********是否与其他促销共存*****/
+	function coexistenceFlagFunc(){
+		$("#coexistenceFlag").change(function(){
+			if($(this).is(":checked")){
+				$("#entireSingle").attr("disabled",false);
+			}else{
+				$("#entireSingle").attr("checked",false);
+				$("#entireSingle").attr("disabled",true);
+			}
+		});
+	}
+	/*****获取焦点选择商品******/
+	function focusChooseBuyGoodsFunc(){
+		$("#chooseBuy").focus(function(){
+			 showSlidePanel('.page-add-step2-choose',function(){
+				 sessionStorage.setItem("flagTree","true1");//取消input id=treeInputVal picke
+				 if(window.editChoose1Sale){//编辑时候
+					//填充选择商品列表
+					fillChooseBuyDataStep2({promotionID:window.editChoose1Sale['promotionId'],isGiveGoods:"1"});
+				 }
+			 });
+		 });
+		//第三步的获取焦点选择购买
+		$("#giveGoods").focus(function(){
+			 showSlidePanel('.page-add-step3-choose',function(){
+				 sessionStorage.setItem("flagTree","true2");//取消input id=treeInputVal picke
+				 //编辑
+			 });
+		});
+	}
+	/***********填充选择购买数据*********/
+	 function fillChooseBuyDataStep2(postData){
+		 window.top.goodsInputDataJson.isGiveGoods="1";
+		if(chooseTableStep2Flag!==true){
+			 chooseTableStep2Flag=true;
+			 listId = "#chooseTableStep2";
+			 pagerId = '#choosePageStep2'; 
+			 var _colModel = [
+				     		    {name : 'id',key : true,width : 60,hidden : true},
+				     			{name : 'skuId',autoWidth : true,align:"center"},
+				     			{name : 'styleName',autoWidth : true,align:"center"}, 
+				     			{name : 'bigTypeName',autoWidth : true,align : "center"},
+				     			{name : 'middleTypeName',autoWidth : true,align:"center"},
+				     			{name : 'smallTypeName',autoWidth : true,align:"center"}, 
+				     			{name : 'sexName',autoWidth : true,align:"center"},
+				     			{name : 'seasonName',autoWidth : true,align:"center"},
+				     			{name:"maxQuantity",autoWidth : true,align:"center",editable:true},
+				     			{name:"minQuantity",autoWidth : true,align:"center",editable:true}
+				     			], 
+				     			_colNames = [' ', '商品编号', '商品名称', '大类', '中类','小类','性别','季节','最大值','最小值'];
+			window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url : queryGoodsListUrl,postData: postData,colNames : _colNames,colModel : _colModel,pager : pagerId,
+				cellEdit:true,cellsubmit:'remote',cellurl : updateMaxAndMinQuyUrl}));
+			var $hpanel=$(".page-add-step2-choose .page-content"),w=$hpanel.width(),
+			$tx=$hpanel.find(".choose-content-head"),$tx2=$hpanel.find(".ui-jqgrid-pager"),$tx3=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv"),
+			$tx4=$hpanel.find(".choose-content-condition");
+			var h=$hpanel.height()-$tx.height()-$tx2.height()-$tx3.height()-$tx4.height()-36,
+			w=$hpanel.width()-36;
+			$tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+		}else{
+			listId = "#chooseTableStep2";
+			pagerId = '#choosePageStep2'; 
+			$(listId).jqGrid("setGridParam", {url : queryGoodsListUrl,postData : postData,
+				cellEdit:true,cellsubmit:'remote',cellurl : updateMaxAndMinQuyUrl}).hideCol("somecol").trigger("reloadGrid"); 
+		}
+		//填充商品下拉列表
+//		fillGoodsList();
+	}
+	/********选择商品******/
+	function chooseSaveStep2Func(){
+		POST(findItemByPromotionIDUrl,JSON.stringify({promotionID:promotionIDAdd,isGiveGoods: "1"}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var goodsListStep1Result=result.rows;
+			$("#chooseSaveStep2").data("goodsListStep1Result",goodsListStep1Result);
+			if(goodsListStep1Result.length==0){
+				window.message({title:"提示信息",text:"请选择商品"});
+				return;
+			}
+			hideSlidePanel(".page-add-step2-choose",function(){
+				window.editChoose1Sale={};//编辑choose1
+				sessionStorage.setItem("flagTree","false");
+				if($(".choose-setp2-content2 .text-panel").text()!=""&&$("#treeInputValTrue1").val()!=""){
+					$("#chooseBuyHiden").html($("#treeInputValTrue1").attr("idvalTrue1"));
+					$("#chooseBuy").val($("#treeInputValTrue1").attr("idvalTrue1"));
+					$("#chooseBuy").attr("title",$("#treeInputValTrue1").attr("idvalTrue1"));
+					$("#chooseBuy").data("goodsTypeId2",$("#treeInputValTrue1").val());
+					return;
+				}
+				var result=$("#chooseSaveStep2").data("goodsListStep1Result"),resultList="";
+				for(var i=0;i<result.length-1;i++){
+					resultList+=result[i].skuID+",";
+				}
+				resultList+=result[result.length-1].skuID;
+				$("#chooseBuy").val(resultList);
+				$("#chooseBuy").attr("title",resultList);
+				$("#chooseBuy").data("goodsTypeId2","");
+				$("#chooseBuyHiden").html(resultList);
+			});
+		});
+	}
+	/*******送商品*****/
+	function chooseSaveStep3Func(){
+		POST(findItemByPromotionIDUrl,JSON.stringify({promotionID: promotionIDAdd,isGiveGoods:'2'}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result['rows'];
+			$("#chooseSaveStep3").data("goodsListStep3Result",result);
+			if(result.length==0){
+				window.message({title:"提示信息",text:"请选择商品"});
+				return;
+			}
+			hideSlidePanel('.page-add-step3-choose',function(){
+				sessionStorage.setItem("flagTree","false");//显示input id=treeInputVal picke
+				if($(".choose-setp2-content3 .text-panel").text()!=""&&$("#treeInputValTrue2").val()!=""){
+					$("#giveGoods").val($("#treeInputValTrue2").attr("idvalTrue2"));
+					$("#giveGoods").attr("title",$("#treeInputValTrue2").attr("idvalTrue2"));
+					$("#giveGoods").data("goodsTypeId3",$("#treeInputValTrue2").val());
+					return;
+				}
+				var resultList="";
+				for(var i=0;i<result.length-1;i++){
+					resultList+=result[i].skuId+",";
+				}
+				resultList+=result[result.length-1].skuId;
+				$("#giveGoods").val(resultList);
+				$("#giveGoods").attr("title",resultList);
+				$("#giveGoods").data("goodsTypeId3","");
+			});
+		});
+	}
+	 function saveReport() {   
+		// jquery 表单提交   
+		$("#uploadStep2Form").ajaxSubmit(function(message){
+		      // 对于表单提交成功后处理，message为提交页面saveReport.htm的返回内容   
+		      
+		    var data={promotionID: promotionIDAdd,isGiveGoods:"1"};
+			fillChooseBuyDataStep2(data);
+		   });   
+		return false; // 必须返回false，否则表单会自己再做一次提交操作，并且页面跳转   
+	}
+	 function saveReport3() {   
+	    // jquery 表单提交   
+	    $("#uploadStep3Form").ajaxSubmit(function(message){
+	          // 对于表单提交成功后处理，message为提交页面saveReport.htm的返回内容   
+	    	fillChooseBuyDataStep3();
+	       });   
+	    return false; // 必须返回false，否则表单会自己再做一次提交操作，并且页面跳转   
+	}  
+	 /***********填充选择购买数据*********/
+	 function fillChooseBuyDataStep3(){
+		 window.top.goodsInputDataJson.isGiveGoods="2";
+		 listId = "#chooseTableStep3";
+		 pagerId = '#choosePageStep3'; 
+		 if(chooseTableStep3Flag!==true){
+			 chooseTableStep3Flag=true;
+			 var _colModel = [
+				     		    {name : 'id',key : true,width : 60,hidden : true},
+				     			{name : 'skuId',autoWidth : true,align:"center"},
+				     			{name : 'styleName',autoWidth : true,align:"center"}, 
+				     			{name : 'bigTypeName',autoWidth : true,align : "center"},
+				     			{name : 'middleTypeName',autoWidth : true,align:"center"},
+				     			{name : 'smallTypeName',autoWidth : true,align:"center"}, 
+				     			{name : 'sexName',autoWidth : true,align:"center"},
+				     			{name : 'seasonName',autoWidth : true,align:"center"},
+				     			{name:"giveCount",autoWidth : true,align:"center",editable:true}
+				     			], 
+				     			_colNames = [' ', '商品编号', '商品名称', '大类', '中类','小类','性别','季节','数量'];
+			window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url : queryGoodsListUrl,postData:{isGiveGoods:"2",promotionID: promotionIDAdd},colNames : _colNames,colModel : _colModel,pager : pagerId,
+				cellEdit:true,cellsubmit:'remote',cellurl : updateGiveCountUrl}));
+			var $hpanel=$(".page-add-step3-choose .page-content"),w=$hpanel.width(),
+			$tx=$hpanel.find(".choose-content-head"),$tx2=$hpanel.find(".ui-jqgrid-pager"),$tx3=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv"),
+			$tx4=$hpanel.find(".choose-content-condition");
+			var h=$hpanel.height()-$tx.height()-$tx2.height()-$tx3.height()-$tx4.height()-36,
+			w=$hpanel.width()-36;
+			$tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+		 }else{
+			 $(listId).jqGrid("setGridParam", {url : queryGoodsListUrl,postData :{isGiveGoods:"2",promotionID: promotionIDAdd} ,
+					cellEdit:true,cellsubmit:'remote',cellurl : updateGiveCountUrl}).hideCol("somecol").trigger("reloadGrid"); 
+		 }
+	}
+	/*******促销新增保存********/
+	function saleAddSaveFunc(){
+		var dataArr={data:{}};
+		//step1
+		dataArr.data.promotionId=promotionIDAdd;
+		var promotionName=$("#salesName").val();
+		dataArr.data.promotionName=promotionName;
+		var startDate=$("#promotionStart").val().split(" ")[0];
+		var startTime=$("#promotionStart").val().split(" ")[1];
+		var expireDate=$("#promotionEnd").val().split(" ")[0];
+		var expireTime=$("#promotionEnd").val().split(" ")[1];
+		dataArr.data.startDate=startDate;
+		dataArr.data.startTime=startTime;
+		dataArr.data.expireDate=expireDate;
+		dataArr.data.expireTime=expireTime;
+		splitStoreIdFunc(dataArr);
+		var promotionDesc=$("#salesDetailsDesc").val();
+		dataArr.data.promotionDesc=promotionDesc;
+		var sharePromotionFlag="",additionalPromotionFlag="",typeIdList=[],skuIdList=[];
+		typeIdList=$("#chooseBuy").data("goodsTypeId2")
+		typeIdList=typeIdList?typeIdList.split(","):[];
+		var result=$("#chooseSaveStep2").data("goodsListStep1Result"),resultList="";
+		if(result){
+			for(var i=0;i<result.length;i++){
+				skuIdList.push({skuId:result[i]['skuID'],bigTypeId:result[i]["bigTypeCode"],price:result[i]['price'],
+					middleTypeId:result[i]["middleTypeCode"],smallTypeId:result[i]["smallTypeCode"],
+					minQuantity : result[i]["minQuantity"],maxQuantity : result[i]["maxQuantity"]});
+			}
+		}
+		dataArr.typeIdList=typeIdList;
+		dataArr.skuList=skuIdList;
+		if($("#coexistenceFlag").is(":checked")){
+			dataArr.data.sharePromotionFlag="Y";
+		}else{
+			dataArr.data.sharePromotionFlag="N";
+		}
+		if($("#entireSingle").is(":checked")){
+			dataArr.data.additionalPromotionFlag="Y";
+		}else{
+			dataArr.data.additionalPromotionFlag="N";
+		}
+		//step2
+		var baseConditionType=$(".sale-add-rules-panel .sale-add-condition label input[type='radio']:checked").attr("value");
+		dataArr.data.baseConditionType=baseConditionType;
+		var promotionCondition=[];
+		if(baseConditionType=="3"){
+			promotionCondition=[];
+		}else{
+			var promotionConditionVal=$(".sale-add-rules-panel .sale-add-condition label input[type='radio']:checked").parents("label").find("input[type='text']").val()
+			if(baseConditionType==2){
+				if(pattern.test(promotionConditionVal)!=true){
+					window.message({text:"请输入有效的消费金额！",title:"提示信息"});
+					return;
+				}
+			}else if(baseConditionType==1){
+				if(/^[1-9]\d*$/.test(promotionConditionVal)!=true){
+					window.message({text:"请输入正整数消费数量！",title:"提示信息"});
+					return;
+				}
+			}
+			promotionCondition.push(promotionConditionVal);
+		}
+		dataArr.data.promotionCondition=promotionCondition;
+		//step3
+		var baseActionType="",promotionAction=[];
+		baseActionType=$(".sale-add-rules-panel .sale-add-result label input[type='radio']:checked").attr("value");
+		var promotionActionVal=$(".sale-add-rules-panel .sale-add-result label input[type='radio']:checked").parents("label").find("input[type='text']").val();
+		if(baseActionType==1){
+			if(pattern.test(promotionActionVal)!=true){
+				window.message({text:"请输入有效的金额！",title:"提示信息"});
+				return;
+			}
+			promotionAction.push(promotionActionVal);
+		}else if(baseActionType==2){
+			if(/^[0-9]+$/.test(promotionActionVal)!=true){
+				window.message({text:"请输入有效的积分！",title:"提示信息"});
+				return;
+			}
+			promotionAction.push(promotionActionVal);
+		}else if(baseActionType==3){
+			if(pattern.test(promotionActionVal)!=true){
+				window.message({text:"请输入有效的金额！",title:"提示信息"});
+				return;
+			}
+			promotionAction.push(promotionActionVal);
+		}else if(baseActionType==4){
+			if(promotionActionVal>=10||promotionActionVal<=0){
+				window.message({text:"请输入小于10的数字大于0的数字",title:"提示信息"});
+				return;
+			}
+		}else if(baseActionType==5){
+			var typeIdList=[],skuIdList=[];
+			var result=$("#chooseSaveStep3").data("goodsListStep3Result");
+			if(result){
+				for(var i=0;i<result.length;i++){
+					var skuId=result[i]['skuId'],
+						bigTypeId=result[i]["bigTypeCode"],
+						price=result[i]['price'],
+						middleTypeId=result[i]["middleTypeCode"],
+						smallTypeId=result[i]["smallTypeCode"],
+						giveCount=result[i]['giveCount'];
+					skuId=skuId?skuId:"";
+					bigTypeId=bigTypeId?bigTypeId:"";
+					price=price?price:"";
+					middleTypeId=middleTypeId?middleTypeId:"";
+					smallTypeId=smallTypeId?smallTypeId:'';
+					giveCount=giveCount?giveCount:"";
+					skuIdList.push({skuId: skuId,bigTypeId: bigTypeId,price: price,middleTypeId: middleTypeId,
+						smallTypeId: smallTypeId,giveCount: giveCount});
+				}
+			}
+			promotionAction.push(skuIdList);
+		}
+		dataArr.data.baseActionType=baseActionType;
+		dataArr.data.promotionAction=promotionAction;
+		POST(saveSalesInfoUrl,JSON.stringify(dataArr),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			$(".choose-setp2-content2 table.choose-content-condition").nextAll().remove(".ui-jqgrid");
+			$(".choose-setp2-content2 table.choose-content-condition").after('<table id="chooseTableStep2"></table><div id="choosePageStep2"></div>');
+			$(".choose-setp2-content3 table.choose-content-condition").nextAll().remove(".ui-jqgrid");
+			$(".choose-setp2-content3 table.choose-content-condition").after('<table id="chooseTableStep3"></table><div id="choosePageStep3"></div>');
+			listId = "#list2",
+			pagerId = '#pager2', 
+			hideSlidePanel2(".page-add-panel");
+			$(listId).trigger("reloadGrid");
+		});
+	}
+	/******清除所有数据******/
+	function clearAllAddPanelData(){
+		var dates = $("input[id='startDateSearch'], input[id='endDateSearch'], input[id='promotionStart'], input[id='promotionEnd']");
+		dates.attr('value', '');
+		dates.each(function(){
+			$(this).datepicker( "option", "maxDate", null );
+			$(this).datepicker( "option", "minDate", new Date() );;
+		});
+		$(".sale-add-rules-panel .sale-message-box label input[type='radio']").attr("checked",false);
+		$("#salesName").val("");
+		$("#promotionStart").val("");
+		$("#promotionEnd").val("");
+		$("#salesDetailsDesc").val("");
+		$(".area-rang .text-panel").html("");
+		$(".area-rang .text-panel").attr("title","");
+		$(".area-rang .text-panel").attr("idval","");
+		$("#chooseBuy").attr("title","");
+		$("#chooseBuy").val("");
+		$("#chooseBuyHiden").html("");
+		$(".choose-setp2-content .text-panel").html("");
+		$(".choose-setp2-content .text-panel").attr("title","");
+		$(".choose-setp2-content .text-panel").attr("idval","")
+		$("#coexistenceFlag").removeAttr("checked");
+		$("#entireSingle").removeAttr("checked");
+		$("#saleRelative").html("");
+		$(".sale-add-condition label:eq(0) input[type='radio']").attr("checked",true);
+		$(".sale-add-result label:eq(0) input[type='radio']").attr("checked",true);
+		$(".sale-add-rules-panel label input[type='text']").val("");
+	}
+	/*****编辑*********/
+	function editButton(promotionId){
+		window.editChoose1Sale={promotionId:promotionId};//作为编辑的选择商品1
+		 window.top.goodsInputDataJson={promotionID:promotionId,findItemByPromotionIDUrl:findItemByPromotionIDUrl};
+		 POST(queryEditInfoUrl,JSON.stringify({promotionId:promotionId}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+// 			$("#saleRelative").html("");
+			sessionStorage.setItem("treeCheckedFlag","true");
+			sessionStorage.setItem("flagTree","");
+			//清除面板数据
+			clearAllAddPanelData();
+			//初始化按钮
+			$(".ul-li-buttons .step-one").show().siblings(".step-two").hide();
+			$(".sale-add-messages-panel").show().next(".sale-add-rules-panel").hide();
+			$(".page-add-panel .ul-li-header ul li:eq(0)").addClass("on").siblings().removeClass("on");
+			var result=result.data;
+			showSlidePanel('.page-add-panel',function(){
+				//填充数据
+				fillEditPanel(result);
+				coexistenceFlagFunc();
+				focusChooseBuyGoodsFunc();
+			});
+		 });
+	}
+	/**********填充数据********/
+	function fillEditPanel(result){
+		//填充生效范围数据
+		var promotionStoreList=result['promotionStoreList'];
+		var storeNameStr='',storeIdStr="",storeCheckStr=[];
+		for(var i in promotionStoreList){
+			if(promotionStoreList[i]['storeName']){
+				storeNameStr+=promotionStoreList[i]['storeName']+',';
+				storeIdStr+=promotionStoreList[i]['storeId']+"_storeId,";
+				storeCheckStr.push({"text":promotionStoreList[i]['storeName'],value:promotionStoreList[i]['storeId']+"_storeId"});
+			}else if(promotionStoreList[i]['districtName']){
+				storeNameStr+=promotionStoreList[i]['districtName']+",";
+				storeIdStr+=promotionStoreList[i]['districtId']+"_districtId,";
+				storeCheckStr.push({"text":promotionStoreList[i]['districtName'],value:promotionStoreList[i]['districtId']+"_districtId"});
+			}else if(promotionStoreList[i]['cityName']){
+				storeNameStr+=promotionStoreList[i]['cityName']+",";
+				storeIdStr+=promotionStoreList[i]['cityId']+"_cityId,";
+				storeCheckStr.push({"text":promotionStoreList[i]['cityName'],value:promotionStoreList[i]['cityId']+"_cityId"});
+			}else if(promotionStoreList[i]['regionName']){
+				storeNameStr+=promotionStoreList[i]['regionName']+",";
+				storeIdStr+=promotionStoreList[i]['regionId']+"_regionId,";
+				storeCheckStr.push({"text":promotionStoreList[i]['regionName'],value:promotionStoreList[i]['regionId']+"_regionId"});
+			}
+		}
+		storeNameStr=storeNameStr.substring(0, storeNameStr.length-1);
+		storeIdStr=storeIdStr.substring(0,storeIdStr.length-1);
+		window.top.ztreeStoreFill=storeCheckStr;
+		$(".area-rang .text-panel").attr("title",storeNameStr);
+		$(".area-rang .text-panel").attr("idval",storeIdStr);
+		$(".area-rang .text-panel").html(storeNameStr+'<input type="hidden" id="treeInputVal" idvaltrue="'+storeNameStr+'" value="'+storeIdStr+'">');
+		
+		//填充选择商品
+		var promotionItemList=result['promotionItemList'];
+		var promotionItemNameStr='',promotionItemIdStr='',promotionItemCheckStr=[],
+			skukItemNameStr='';
+		for(var i in promotionItemList){
+			var text='';
+			if(promotionItemList[i]['bigTypeName']){
+				promotionItemNameStr+=promotionItemList[i]['bigTypeName']+",";
+				promotionItemIdStr+=promotionItemList[i]['bigTypeId']+",";
+				text=promotionItemList[i]['bigTypeName'];
+			}else if(promotionItemList[i]['middleTypeName']){
+				promotionItemNameStr+=promotionItemList[i]['middleTypeName']+",";
+				promotionItemIdStr+=promotionItemList[i]['middleTypeId']+",";
+				text=promotionItemList[i]['middleTypeName'];
+			}else if(promotionItemList[i]['smallTypeName']){
+				promotionItemNameStr+=promotionItemList[i]['smallTypeName']+",";
+				promotionItemIdStr+=promotionItemList[i]['smallTypeId']+",";
+				text=promotionItemList[i]['smallTypeName'];
+			}
+			if(text){
+				var bigTypeId=promotionItemList[i]['bigTypeId'];
+				bigTypeId=bigTypeId?bigTypeId:"0";
+				var middleTypeId=promotionItemList[i]['middleTypeId'];
+				middleTypeId=middleTypeId?middleTypeId:"0";
+				var smallTypeId=promotionItemList[i]['smallTypeId'];
+				smallTypeId=smallTypeId?smallTypeId:'0';
+				var value=bigTypeId+"#"+middleTypeId+"#"+smallTypeId;
+				promotionItemCheckStr.push({text:text,value:value});
+			}
+			if(promotionItemList[i]['skuId']){
+				skukItemNameStr+=promotionItemList[i]['skuId']+",";
+			}
+		}
+		window.top.ztreeGoods1Fill=promotionItemCheckStr;
+		if(promotionItemNameStr){
+			promotionItemNameStr=promotionItemNameStr.substring(0, promotionItemNameStr.length-1);
+			promotionItemIdStr=promotionItemIdStr.substring(0, promotionItemIdStr.length-1);
+			$("#chooseBuy").attr("title",promotionItemNameStr);
+			$("#chooseBuy").val(promotionItemNameStr);
+			$("#chooseBuyHiden").text(promotionItemNameStr);
+			$(".choose-setp2-content2 .text-panel").attr("idval",promotionItemIdStr);
+			$(".choose-setp2-content2 .text-panel").attr("title",promotionItemNameStr);
+			$(".choose-setp2-content2 .text-panel").html(promotionItemNameStr+'<input type="hidden" id="treeInputValTrue1" idvaltrue1="'+promotionItemNameStr
+						+'" value="'+promotionItemIdStr+'">');
+		}else if(skukItemNameStr){
+			$("#chooseBuy").attr("title",skukItemNameStr);
+			$("#chooseBuy").val(skukItemNameStr);
+			$("#chooseBuyHiden").text(skukItemNameStr);
+		}
+		
+		
+		
+		$("#salesName").val(result.promotionName);
+		$("#promotionStart").val(result.startDate+" "+result.startTime);
+		$("#promotionEnd").val(result.expireDate+" "+result.expireTime);
+		$("#salesDetailsDesc").val(result.promotionDesc);
+		var baseConditionType=result["baseConditionType"]-1;
+		$(".sale-add-condition label:eq("+baseConditionType+") input[type='radio']").attr("checked",true);
+		$(".sale-add-condition label:eq("+baseConditionType+") input[type='text']").val(result["promotionCondition"]);
+		var baseActionType=result["baseActionType"]-1;
+		$(".sale-add-result label:eq("+baseActionType+") input[type='radio']").attr("checked",true);
+		var promotionActionVal=result['promotionAction'];
+		if(promotionActionVal){//不是送商品的时候
+			$(".sale-add-result label:eq("+baseActionType+") input[type='text']").val(promotionActionVal);
+		}
+		
+	}
+	/**********回车键查询************/
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        advancedSearchFunc();
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" enctype="multipart/form-data;"  method="post">
+						<input name="fileName"  value="oss/queryPromotionList.xlsx" type="hidden"/>
+    					<input name="componentName" value="queryPromotionList" type="hidden"/>
+    					<input name="regionId" id="areaForm" type="hidden"/>
+    					<input name="cityId" id="cityForm" type="hidden"/>
+    					<input name="districtId" id="cityAreaForm" type="hidden"/>
+    					<input name="storeId" id="storeForm" type="hidden"/>
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td>促销名称：<input id="promotionNameSearch" name="promotionName" onkeydown="return keyLogins(event)" type="text" style="width:146px;margin-left:4px;" class="form-control"/></td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查找</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板">
+										<i class="fa  fa-angle-down" style="margin-right:0px;"></i>
+									</button>
+								</td>
+							</tr>	
+							<tr>
+								<td>生效日期：
+									<input id="startDateSearch" onkeydown="return keyLogins(event)" name="startDate" data-xtype="text" style="width:146px;" class="form-control"/> -
+									<input name="expireDate" onkeydown="return keyLogins(event)" id="endDateSearch" data-xtype="text" style="width:146px;" class="form-control"/>
+								</td>
+							</tr>
+							<tr>
+								<td>生效范围：
+									<select data-xtype="chosen" style="width:160px;" id="areaSearch"></select>
+									<select data-xtype="chosen" style="width:160px;" id="citySearch"></select>
+									<select data-xtype="chosen" style="width:160px;" id="cityAreaSearch"></select>
+									<select data-xtype="chosen" style="width:160px;" id="storeSearch"></select>
+								</td>
+							</tr>					
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0"
+					border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td><button type="button" id="advancedAdd"><i class="fa fa-plus"></i>新增</button></td>
+						<td><button type="button" id="exportForm"><i class="fa fa-paperclip"></i>导出</button></td>
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="queryStore" xdata-type="text" placeholder="输入促销名称" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- 促销新增模板 -->
+	<div class="page-add-panel full-drop-panel scorll-panel">
+		<div class="section header sale">
+			<div class="ul-li-header" style="position:relative;">
+				<ul class="list left">
+					<li class="on first">促销信息</li>
+					<li class="last">促销规则</li>
+					<div class="clearfix"></div>
+				</ul>
+				<div class="ul-li-buttons right">
+					<a id="stepOneNext" class="next-step step-one">下一步</a>
+					<a id="stepOneCancel" class="next-step step-one">取消</a>
+					<a id="stepTwoPrev" class="next-step step-two">上一步</a>
+					<a id="stepTwoSave" class="next-step step-two">完成</a>
+					<a id="stepTwoCancel" class="next-step step-two">取消</a>
+				</div>
+				<div class="clearfix sale-add-head-content-split"></div>
+			</div>
+		</div>
+		<div class="sale-add-content">
+			<!-- 促销信息 -->
+			<div class="sale-add-messages-panel">
+				<div class="sale-message-box">
+					<div class="left sale-message-box-name">促销名称：</div>
+					<div class="left sale-message-box-val"><input type="text" id="salesName"/></div>
+					<div class="clearfix"></div>
+				</div>
+				<div class="sale-message-box sale-add-time">
+					<div class="left sale-message-box-name">促销时间：</div>
+					<div class="left sale-message-box-val">
+						<input class="left" type="text" id="promotionStart"/>
+						<span class="left">至</span>
+						<input class="left" type="text" id="promotionEnd"/>
+						<div class="celarfix"></div>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+				<div class="sale-message-box area-rang">
+					<div class="left sale-message-box-name">区域范围：</div>
+					<div class="left sale-message-box-val">
+						<input data-url="./pages/sales/leftTree.html" style="padding:4px 6px;width:383px;" id="effectRang" data-xtype="pick"  data-dialogWidth="600" data-dialogHeight="600"/>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+				<div class="sale-message-box textarea">
+					<div class="left sale-message-box-name">细则说明：</div>
+					<div class="left sale-message-box-val"><textarea id="salesDetailsDesc"></textarea></div>
+					<div class="clearfix"></div>
+				</div>
+				<div class="sale-message-box" id="saleAddObjBox">
+					<div class="left sale-message-box-name">促销对象：</div>
+					<div class="left sale-message-box-val sale-obj">
+						<label class="left"><input name="saleAddObj" checked type="radio"/>等级会员</label>
+						<label class="left"><input name="saleAddObj" type="radio"/>所有人</label>
+						<div class="clearfix"></div>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+				<div class="sale-message-box" id="saleAddObjContentBox">
+					<div class="left sale-message-box-name">&nbsp;</div>
+					<div class="sale-add-obj-content">
+						<label class="left"><input type="checkbox"/>所有热风普通会员</label>
+						<label class="left"><input type="checkbox"/>所有热风普通会员</label>
+						<label class="left"><input type="checkbox"/>所有热风普通会员</label>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+				<div class="sale-message-box">
+					<div class="left sale-message-box-name">促销商品：</div>
+					<div class="left sale-message-box-val">
+						<input type="text" id="chooseBuy" readonly/>
+						<div id="chooseBuyHiden" style="display:none"></div>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+				<div class="sale-message-box sale-relationship" >
+					<div class="left sale-message-box-name">促销关系：</div>
+					<div class="left sale-message-relationship">
+						<label><input id="coexistenceFlag" name="saleRelationship" type="checkbox"/>与其他促销共享</label>
+						<label><input id="entireSingle" name="saleRelationship" disabled type="checkbox"/>不与其他促销共享</label>
+					</div>
+					<div class="left sale-message-box-val border-content">
+						<ul id="saleRelative">
+<!-- 							<li>sadf</li> -->
+<!-- 							<li>sadf</li> -->
+<!-- 							<li>sad234f</li> -->
+<!-- 							<li>sadf234</li> -->
+<!-- 							<li>sa324df</li> -->
+<!-- 							<li>sadf</li> -->
+						</ul>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+			<!-- 促销规则 -->
+			<div class="sale-add-rules-panel none">
+				<div class="sale-add-condition">
+					<div class="sale-add-rules-title">选择任意一个促销条件进行设置</div>
+					<div class="sale-message-box">
+						<label>
+							<div class="left input-radio"><input type="radio" value="1" name="condition"/></div>
+							<div class="left sale-message-box-name">消费数量满：</div>
+							<div class="left sale-message-box-val"><input type="text"/></div>
+							<div class="clearfix"></div>
+						</label>
+					</div>
+					<div class="sale-message-box">
+						<label>
+							<div class="left input-radio"><input type="radio" value="2" name="condition"/></div>
+							<div class="left sale-message-box-name">消费金额满：</div>
+							<div class="left sale-message-box-val"><input type="text"/></div>
+							<div class="clearfix"></div>
+						</label>
+					</div>
+					<div class="sale-message-box">
+						<label>
+							<div class="left input-radio"><input type="radio" value="3" name="condition"/></div>
+							<div class="left sale-message-box-name">消费整单</div>
+							<div class="clearfix"></div>
+						</label>
+					</div>
+				</div>
+					
+				<div class="sale-add-result">
+					<div class="sale-add-rules-title">选择任意一个规则条件进行设置</div>
+					<div class="sale-message-box">
+						<label>
+							<div class="left input-radio"><input type="radio" value="1" name="result"/></div>
+							<div class="left sale-message-box-name">减：</div>
+							<div class="left sale-message-box-val"><input type="text"/></div>
+							<div class="left sale-message-box-result">元</div>
+							<div class="clearfix"></div>
+						</label>
+					</div>
+					<div class="sale-message-box">
+						<label>
+							<div class="left input-radio"><input type="radio" value="2" name="result"/></div>
+							<div class="left sale-message-box-name">送：</div>
+							<div class="left sale-message-box-val"><input type="text"/></div>
+							<div class="left sale-message-box-result">积分</div>
+							<div class="clearfix"></div>
+						</label>
+					</div>
+					<div class="sale-message-box">
+						<label>
+							<div class="left input-radio"><input type="radio" value="3" name="result"/></div>
+							<div class="left sale-message-box-name">一口价：</div>
+							<div class="left sale-message-box-val"><input type="text"/></div>
+							<div class="left sale-message-box-result">元/件</div>
+							<div class="clearfix"></div>
+						</label>
+					</div>
+					<div class="sale-message-box">
+						<label>
+							<div class="left input-radio"><input type="radio" value="4" name="result"/></div>
+							<div class="left sale-message-box-name">打：</div>
+							<div class="left sale-message-box-val"><input type="text"/></div>
+							<div class="left sale-message-box-result">折</div>
+							<div class="clearfix"></div>
+						</label>
+					</div>
+					<div class="sale-message-box">
+						<label>
+							<div class="left input-radio"><input type="radio" value="5" name="result"/></div>
+							<div class="left sale-message-box-name">送：</div>
+							<div class="left sale-message-box-val">
+								<input type="text" id="giveGoods" readonly/>
+							</div>
+							<div class="left sale-message-box-result">商品</div>
+							<div class="clearfix"></div>
+						</label>
+					</div>
+				</div>	
+				
+			</div>
+		</div>
+	</div>
+	<div class="page-add-step2-choose full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;position:relative;">
+					<form action="../../file/itemUpload.do" id="uploadStep2Form" enctype="multipart/form-data;" method="post" onsubmit="return saveReport();">
+						<input name="itemFile" id="uploadStep2" type="file" style="z-index:100;position:absolute;width:73px;height:28px;left:0px;top:0;bottom:0;right:0px;opacity:0;filter:Alpha(opacity=0);cursor:pointer;"/>
+						<input name="uploadInpFileName" id="uploadStep2Name" type="hidden"/>
+						<input name="promotionID" id="promotionIDUpload" type="hidden"/>
+						<input name="isGiveGoods" value="1" type="hidden"/>
+					</form>
+					<button id="chooseImportStep2"><i class="fa fa-pencil"></i>导入</button>
+					<button id="chooseSaveStep2"><i class="fa fa-check"></i>保存</button>
+					<button id="chooseCancelStep2"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<!-- 选择购买内容 -->
+		<div class="page-content">
+			<div class="choose-setp2-content choose-setp2-content2">
+				<table class="choose-content-condition" style="width:100%;border:1px solid #ccc">
+					<tr>
+						<td>选择范围：
+							<input data-url="./pages/sales/goodsLeftTree.html" id="goodsEffectRang" data-xtype="pick"  data-dialogWidth="600" data-dialogHeight="400" style="width:400px;"  name="jde"/>
+						</td>
+					</tr>
+				</table>
+				<table id="chooseTableStep2"></table>
+				<div id="choosePageStep2"></div>
+			</div>
+		</div>
+	</div>
+	<div class="page-add-step3-choose full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;position:relative;">
+					<form action="../../file/itemUpload.do" id="uploadStep3Form" enctype="multipart/form-data;" method="post" onsubmit="return saveReport3();">
+						<input name="itemFile" id="uploadStep3" type="file" style="z-index:100;width:70px;height:28px;position:absolute;left:0px;top:0;bottom:0;right:0px;opacity:0;filter:Alpha(opacity=0);cursor:pointer;"/>
+						<input name="uploadInpFileName" id="uploadStep3Name" type="hidden"/>
+						<input name="promotionID" id="promotionIDUpload3" type="hidden"/>
+						<input name="isGiveGoods" value="2" type="hidden"/>
+					</form>
+					<button id="chooseImportStep3"><i class="fa fa-pencil"></i>导入
+					</button>
+					<button id="chooseSaveStep3"><i class="fa fa-check"></i>保存</button>
+					<button id="chooseCancelStep3"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<!-- 选择购买内容 -->
+		<div class="page-content">
+			<div class="choose-setp2-content choose-setp2-content3">
+<!-- 				<div class="choose-content-head"></div> -->
+				<table class="choose-content-condition" style="width:100%;border:1px solid #ccc">
+					<tr>
+						<td>选择范围：
+							<input data-url="./pages/sales/goodsLeftTree.html" id="goodsEffectRang3" data-xtype="pick"  data-dialogWidth="600" data-dialogHeight="400" style="width:400px;"  name="jde"/>
+						</td>
+					</tr>
+				</table>
+				<table id="chooseTableStep3"></table>
+				<div id="choosePageStep3"></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

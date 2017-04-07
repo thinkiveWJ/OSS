@@ -1,0 +1,228 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <script type="text/javascript" src="../js/jquery.js"></script>
+    <script type="text/javascript" src="../js/ui.custom.js"></script>
+    <script type="text/javascript" src="../js/ui.nodeline.js"></script>
+    <script type="text/javascript" src="../js/ui.jqpagination.js"></script>
+    <script type="text/javascript" src="../js/ui.piechart.js"></script>
+    <link href="../theme/default/ui.custom.css" rel="stylesheet" />
+    <link href="../theme/default/font.awesome.css" rel="stylesheet" />
+    <link href="../theme/default/ui.jqpagination.css" rel="stylesheet" />
+    <link href="../theme/default/ui.piechart.css" rel="stylesheet" />
+    <!--[if IE 7]>
+    <link href="../theme/default/font.awesome-ie7.css" rel="stylesheet" />
+        <style type="text/css">
+            .fa-lg {
+              line-height: 68px !important;
+            }
+        </style>
+    <![endif]-->
+
+    <link href="../theme/default/ui.nodeline.css" rel="stylesheet" />
+    <style type="text/css">
+        body {
+            background-color: #efefef;
+            padding: 12px;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            overflow-x: hidden;
+            margin: 0px;
+            font-size: 75%;
+        }
+
+        .ui-tooltip {
+            background: none !important;
+            background-color: #072707 !important;
+            color: white !important;
+            border: none !important;
+            border-bottom-right-radius: 0px !important;
+            border-bottom-left-radius: 0px !important;
+            border-top-right-radius: 0px !important;
+            border-top-left-radius: 0px !important;
+        }
+
+        .nx-column {
+            float: left;
+            position: relative;
+            min-height: 1px;
+            display: block;
+        }
+
+            .nx-column .nx-content-div {
+                padding-left: 6px;
+                padding-right: 6px;
+                padding-top: 0px;
+            }
+
+        .portlet {
+            position: relative;
+            clear: both;
+            width: auto;
+            margin-bottom: 12px;
+            border: 1px solid #D5D5D5;
+            -webkit-border-radius: 0px;
+            -moz-border-radius: 0px;
+            border-radius: 0px;
+            overflow: hidden;
+        }
+
+            .portlet:hover {
+                box-shadow: 1px 2px 6px #B4B4B4;
+            }
+
+            .portlet .portlet-header {
+
+                height: 36px;
+                position: relative;
+                padding: 1px 15px;
+                background-color: white;
+                border-bottom: 1px solid #D5D5D5;
+            }
+
+                .portlet .portlet-header h3 {
+                    float: left;
+                    padding: 9px 0;
+                    margin: 0 1em 0 0;
+                    display: inline-block;
+                    vertical-align: middle;
+                    font-size: 15px;
+                    font-weight: bold;
+                    color: #707070;
+                    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+                }
+
+            .portlet .portlet-content {
+                padding: 0px;
+                background: #FFF;
+                -webkit-background-clip: padding-box;
+                -moz-background-clip: padding;
+                background-clip: padding-box;
+            }
+
+        #Div6 {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+        }
+
+        .task-type-bar {
+            height: 47px;
+            text-align: center;
+            background-color: #f2f1f6;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .task-type-radios {
+            margin-left: auto !important;
+            margin-right: auto !important;
+            display: inline-block;
+            margin-top: 11px;
+        }
+
+        .ui-buttonset .ui-button {
+            margin-left: 0;
+            margin-right: -7px;
+        }
+
+        .task-type-radios .ui-corner-all, .task-type-radios .ui-corner-bottom, .task-type-radios .ui-corner-right, .task-type-radios .ui-corner-br {
+            border-bottom-right-radius: 14px;
+        }
+
+        .task-type-radios .ui-corner-all, .task-type-radios .ui-corner-top, .task-type-radios .ui-corner-right, .task-type-radios .ui-corner-tr {
+            border-top-right-radius: 14px;
+        }
+
+        .task-type-radios .ui-corner-all, .task-type-radios .ui-corner-bottom, .task-type-radios .ui-corner-left, .task-type-radios .ui-corner-bl {
+            border-bottom-left-radius: 14px;
+        }
+
+        .task-type-radios .ui-corner-all, .task-type-radios .ui-corner-top, .task-type-radios .ui-corner-left, .task-type-radios .ui-corner-tl {
+            border-top-left-radius: 14px;
+        }
+
+        .task-type-radios .ui-state-active, .task-type-radios .ui-widget-content .ui-state-active, .task-type-radios .ui-widget-header .ui-state-active {
+            background: #FFFFFF !important;
+            /* font-weight: bold; */
+            color: #202020 !important;
+            cursor: default;
+        }
+
+        .task-type-radios .ui-state-default, .task-type-radios .ui-widget-content .ui-state-default, .task-type-radios .ui-widget-header .ui-state-default {
+            border: 1px solid #cfcfcf;
+            background: #F2F2F3;
+            font-weight: normal;
+            color: #7A7A7A;
+        }
+
+        .task-type-radios .ui-button-text-only .ui-button-text {
+            padding: 3px 12px 4px 12px;
+        }
+
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+            .task-table tr {
+                border-collapse: collapse;
+            }
+
+                .task-table tr:nth-child(2n+2) {
+                    background-color: whitesmoke;
+                }
+
+            .task-table td {
+                padding: 7px 6px;
+            }
+
+        .task-tab {
+            display: none;
+        }
+
+        .tab-active {
+            display: block;
+        }
+
+        .bottom-bar {
+            background-color: #fefefe;
+            border-top: 1px solid #DFDFDF;
+            position: relative;
+        }
+
+        .pagination {
+            margin-top: 2px;
+            margin-left: 6px;
+            position: relative;
+        }
+
+        .tempTable {
+            display: none;
+        }
+
+        .task-table button {
+            color: white;
+            background-color: #009E98;
+            border: none;
+            font-size: 12px;
+            font-family: "黑体","微软雅黑";
+            padding: 3px 4px;
+            outline:none;
+        }
+
+            .task-table button:hover {
+                box-shadow: 1px 0px 2px #666;
+                background-color: #00CAC3;
+            }
+
+            .task-table button:active {
+                box-shadow: 2px 1px 8px #000 inset;
+            }
+    </style>
+</head>
+<body>
+
+</body>
+</html>

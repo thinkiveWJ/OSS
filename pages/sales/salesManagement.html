@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../js/jquery.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../js/page.common.js"></script>
+<style type="text/css">
+.chzn-container-single .chzn-single{padding:2px;}
+</style>
+<script type="text/javascript">
+	var listId = "#list2",
+		nextStepTool=0,
+		pagerId = '#pager2', 
+		loadUrl = "../../masterdata/brand.do?command=load", 
+		saveUrl = "../../masterdata/brand.do?command=submit", 
+		listUrl = "../../masterdata/brand.do?command=search";
+	$(function() {
+		_initButtons();//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'brandName',width : 250}, 
+			     			{name : 'brandAbbreviation',width : 200,align:"center"},
+			     			{name : 'remark',autoWidth : true}, 
+			     			{name : 'status',width : 100,align : "center"},
+			     			{name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'brandName',width : 250}, 
+			     			{name : 'brandAbbreviation',width : 200,align:"center"},
+			     			{name : 'remark',autoWidth : true}, 
+			     			{name : 'status',width : 100,align : "center"}
+			     			], 
+			     			_colNames = [' ','序号', '促销名称', '生效范围', '商品范围', '生效时间','结束时间','状态','操作','操作人员'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		
+		resizeFun();
+		/**截止日期**/
+		$("input[name='startDate']").datepicker({
+			changeMonth: true,
+		    onClose: function( selectedDate ) {
+				$("input[name='endDate']").datepicker( "option", "minDate", selectedDate );
+		    }
+		});
+		$("input[name='endDate']").datepicker({
+		      changeMonth: true,
+		      onClose: function( selectedDate ) {
+		    	  $("input[name='startDate']").datepicker( "option", "maxDate", selectedDate );
+		      }
+		});
+	});
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm">
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td>促销名称：</td>
+								<td><input name="brandName" data-xtype="text" style="width:146px;" class="form-control"/></td>
+								<td style="padding-left: 30px;text-align:right;">
+									生效时间：<input name="startDate" data-xtype="text" style="width:146px;" class="form-control"/> -
+									<input name="endDate" data-xtype="text" style="width:146px;" class="form-control"/>
+								</td>
+								<td style="padding-left:30px;">
+									生效范围：
+									<select data-xtype="chosen" name="operateType" style="width:146px;">
+										<option value="">区域</option>
+										<option value="LOGIN">登陆</option>
+										<option value="ADD">新增</option>
+										<option value="EDIT">编辑</option>
+										<option value="QUERY">查询</option>
+										<option value="DELETE">删除</option>
+										<option value="TAX">税务操作</option>
+										<option value="OTHER">其他</option>
+									</select>
+									&nbsp;&nbsp;
+									<select data-xtype="chosen" name="operateType" style="width:146px;">
+										<option value="">城市</option>
+										<option value="LOGIN">登陆</option>
+										<option value="ADD">新增</option>
+										<option value="EDIT">编辑</option>
+										<option value="QUERY">查询</option>
+										<option value="DELETE">删除</option>
+										<option value="TAX">税务操作</option>
+										<option value="OTHER">其他</option>
+									</select>
+								</td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch">
+										<i class="fa fa-search"></i>查询
+									</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板">
+										<i class="fa  fa-angle-down" style="margin-right:0px;"></i>
+									</button>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0"
+					border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="insertBTN"><i class="fa fa-plus"></i>新增</button></td>
+						<td class="buttons"><button id="exportBTN"><i class="fa fa-paperclip"></i>导出</button></td>
+						<td style="padding-left: 24px; padding-right: 5px;"><input
+							id="fastQueryText" xdata-type="text" placeholder="可以输入促销名称查询"
+							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td>
+						<td>
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data">商品选择</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- 新增模板 -->
+	<div class="page-editor-panel full-drop-panel">
+	<!-- 新增模板头部 -->
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<form>
+					<div style="margin-top: 4px;">
+						<button id="queryAdd"><i class="fa fa-search"></i>查询</button>
+						<button><i class="fa fa-pencil"></i>导入</button>
+						<button style="margin-right: 24px;"><i class="fa fa-check"></i>保存</button>
+						<button><i class="fa fa-times"></i>取消</button>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- 新增模板具体内容 -->
+		<div class="page-content">
+			<div class="page-inner-content">
+				<table style="margin:0 auto;border-collapse:separate; border-spacing:20px">
+					<tr>
+					     <td style="padding-left: 12px;text-align:right;">品牌：</td>
+	                     <td>
+	                         <select data-xtype="chosen" name="status" style="width:154px;">
+	                             <option value="">全部</option>
+	                             <option value="1">启用</option>
+	                             <option value="0">停用</option>
+	                         </select>
+	                     </td>
+	                     <td style="padding-left: 12px;text-align:right;">大类：</td>
+	                     <td>
+	                         <select data-xtype="chosen" name="status" style="width:154px;">
+	                             <option value="">全部</option>
+	                             <option value="1">启用</option>
+	                             <option value="0">停用</option>
+	                         </select>
+	                     </td>
+	                     <td style="padding-left: 12px;text-align:right;">中类：</td>
+	                     <td>
+	                         <select data-xtype="chosen" name="status" style="width:154px;">
+	                             <option value="">全部</option>
+	                             <option value="1">启用</option>
+	                             <option value="0">停用</option>
+	                         </select>
+	                     </td>
+	                     <td style="padding-left: 12px;text-align:right;">小类：</td>
+	                     <td>
+	                         <select data-xtype="chosen" name="status" style="width:154px;">
+	                             <option value="">全部</option>
+	                             <option value="1">启用</option>
+	                             <option value="0">停用</option>
+	                         </select>
+	                     </td>
+	                 </tr>
+	                 <tr>
+					     <td style="padding-left: 12px;text-align:right;">性别：</td>
+	                     <td>
+	                         <select data-xtype="chosen" name="status" style="width:154px;">
+	                             <option value="">全部</option>
+	                             <option value="1">启用</option>
+	                             <option value="0">停用</option>
+	                         </select>
+	                     </td>
+	                     <td style="padding-left: 12px;text-align:right;">年份：</td>
+	                     <td>
+	                         <select data-xtype="chosen" name="status" style="width:154px;">
+	                             <option value="">全部</option>
+	                             <option value="1">启用</option>
+	                             <option value="0">停用</option>
+	                         </select>
+	                     </td>
+	                     <td style="padding-left: 12px;text-align:right;">季节：</td>
+	                     <td>
+	                         <select data-xtype="chosen" name="status" style="width:154px;">
+	                             <option value="">全部</option>
+	                             <option value="1">启用</option>
+	                             <option value="0">停用</option>
+	                         </select>
+	                     </td>
+	                 </tr>
+	             </table>
+				<div class="sales-data">促销数据</div>
+				<table id="listAdd"></table>
+				<div id="pagerAdd"></div>
+			</div>
+		</div>
+	<div class="page-view-panel full-drop-panel"></div>
+</body>
+</html>

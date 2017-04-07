@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../js/jquery.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../js/page.common.js"></script>
+<script type="text/javascript" src="../../js/ui.getDictionaryData.js"></script>
+<style type="text/css">
+.pay-info-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.pay-choose-channel input[type='radio']{vertical-align:middle;}
+.pay-choose-channel  .channel-details{margin:12px auto;}
+.width120{width:100px;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	listUrl = "../../reportForms/inquiryStoreGoodsSaleInfo.do",
+	queryTypeList="../../reportForms/findAllBigType.do";
+	
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				var postData={storeName: $("#fastQueryText").val(),bigTypeCode:"",billDateFrom:"",billDateTo:""};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch: advancedSearchFunc,
+			exportForm:function(){
+				var bigTypeCode=$("#typeChosen").data("chosen").selectedItem();
+				bigTypeCode=bigTypeCode?bigTypeCode["value"]:"";
+				$("#bigTypeCodeSearch").val(bigTypeCode);
+				$("#searchForm").submit();
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     		   {name : 'bigTypeName',autoWidth : true,align:"center"},
+			     			{name : 'amount',autoWidth : true,align:"center"}, 
+			     			{name : 'qry',autoWidth : true,align : "center"},
+			     			{name : 'amountPerQry',autoWidth : true,align:"center"},
+			     			{name : 'qryPercent',autoWidth : true,align:"center"},
+			     			], 
+			     			_colNames = [' ','品类','销售额', '销售件数','销售占比', '件数占比'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		$("#startDateSearch").datepicker({
+			changeMonth: true,
+		    onClose: function( selectedDate ) {
+				$("#endDateSearch").datepicker( "option", "minDate", selectedDate );
+		    }
+		});
+		$("#endDateSearch").datepicker({
+			changeMonth: true,
+		    onClose: function( selectedDate ) {
+				$("#startDateSearch").datepicker( "option", "maxDate", selectedDate );
+		    }
+		});
+		//初始化品类选择
+		initTypeChoose();
+	});
+	/*******初始化品类选择*******/
+	function initTypeChoose(){
+		POST(queryTypeList,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+    			window.message({title:"提示信息",text: result.rspMsg});
+    			return;
+    		}
+			var result=result.rows;
+			for(var i in result){
+				result[i]={text:result[i].bigTypeName,value:result[i].bigTypeCode};
+			}
+			result.unshift({text:"请选择",value:""});
+			$("#typeChosen").data("chosen")._clearOptions();
+			$("#typeChosen").data("chosen")._addOptions(result);
+		});
+	}
+	function advancedSearchFunc(){
+		var postData={};
+		var storeName=$("#storeNameSearch").val();
+		var billDateFrom=$("#startDateSearch").val();
+		var billDateTo=$('#endDateSearch').val();
+		var bigTypeCode=$("#typeChosen").data("chosen").selectedItem();
+		bigTypeCode=bigTypeCode?bigTypeCode["value"]:"";
+		var postData={storeName:storeName,billDateFrom:billDateFrom,billDateTo:billDateTo,bigTypeCode:bigTypeCode};
+		$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var postData={storeName: $("#fastQueryText").val(),bigTypeCode:"",billDateFrom:"",billDateTo:""};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        advancedSearchFunc();
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action"  method="post">
+						<input name="fileName" type="hidden" value="oss/reportForm/inquiryStoreGoodsSaleInfo.xlsx" />
+    					<input name="componentName" type="hidden" value="inquiryStoreGoodsSaleInfo"/>
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="text-align:right;padding-left:30px;">门店名称：<input name="storeName" onkeydown="return keyLogins(event)" class="" type="text" id="storeNameSearch"/></td>
+								<td style="text-align:right;padding-left:30px;">日期：<input 
+									name="billDateFrom" type="text" onkeydown="return keyLogins(event)" id="startDateSearch"/>-<input name="billDateTo" 
+									onkeydown="return keyLogins(event)" type="text" id="endDateSearch"/>
+								</td>
+								<td style="padding-left:12px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+							<tr>
+								<input type="hidden" name="bigTypeCode" id="bigTypeCodeSearch"/>
+								<td style="text-align:right;padding-left:30px;">品类选择：<select data-xtype="chosen" id="typeChosen" style="width:208px;"></select></td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="exportForm"><i class="fa fa-paperclip"></i>导出</button></td>
+						<td style="padding-left: 24px; padding-right: 5px;"><input
+							id="fastQueryText" xdata-type="text" placeholder="输入门店名称查询" onkeydown="return keyLogin(event)"
+							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td>
+						<td>
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	
+</body>
+</html>

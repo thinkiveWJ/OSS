@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.members.css" rel="stylesheet" />
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script src="../../../js/highcharts.js"></script>
+<style type="text/css">
+	.t-left-panel{
+    background-color: white;
+    display: none;
+    height: 100%;
+    position: absolute;
+    width: 250px;
+    z-index: 2;
+    border-right:1px solid #ccc;
+    margin-top:35px;
+}
+.t-left-panel .toolbar{padding:12px;}
+.t-left-panel-title{height:30px;background:#018659;width:100%;}
+/* #treeDemo{height:200px;} */
+.t-left-panel .tree-button{position:absolute;buttom:0px;left:0;height:50px;width:236px;bakcground:#fca2ca;}
+.t-left-panel .tree-button a{width:95px;margin:10px 0 10px 12px ;height:30px;line-height:30px;text-align:center;color:#fff;background:#018659;}
+table.add-detail-step1-table .memberRadio label + label{margin-left:12px;}
+table.memer-radio-details td{height:24px;}
+input{vertical-align:middle;}
+</style>
+<script type="text/javascript">
+
+$(function() {
+	_initButtons({
+		
+	});//from page.common.js
+	$("#startDateSearch").datepicker({
+		changeMonth: true,
+	    onClose: function( selectedDate ) {
+			$("#endDateSearch").datepicker( "option", "minDate", selectedDate );
+	    }
+	});
+	$("#endDateSearch").datepicker({
+		changeMonth: true,
+	    onClose: function( selectedDate ) {
+			$("#startDateSearch").datepicker( "option", "minDate", selectedDate );
+	    }
+	});
+	//填充会员增长报表数据
+	fillMemberIncrease();
+});
+/****填充会员增长报表数据****/
+function fillMemberIncrease(){
+	 $('#container').highcharts({
+	        chart: {
+	            type: 'column'
+	        },
+	        title: {
+	            text: 'Monthly Average Rainfall'
+	        },
+	        subtitle: {
+	            text: 'Source: WorldClimate.com'
+	        },
+	        xAxis: {
+	            categories: [
+	                '1',
+	                '2',
+	                '3',
+	                '4',
+	                'May',
+	                'Jun',
+	                'Jul',
+	                'Aug',
+	                'Sep',
+	                'Oct',
+	                'Nov',
+	                'Dec'
+	            ]
+	        },
+	        yAxis: {
+	            min: 0,
+	            title: {
+	                text: 'Rainfall (mm)'
+	            }
+	        },
+	        tooltip: {
+	            headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+	            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+	                '<td style="padding:0"><b>{point.y:.1f} mm</b></td></tr>',
+	            footerFormat: '</table>',
+	            shared: true,
+	            useHTML: true
+	        },
+	        plotOptions: {
+	            column: {
+	                pointPadding: 0.2,
+	                borderWidth: 0
+	            }
+	        },
+	        series: [{
+	            name: 'Tokyo',
+	            data: [69.9, 91.5, 406.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 13194.1, 95.6, 54.4]
+
+	        }, {
+	            name: 'New York',
+	            data: [83.6, 78.8, 98.5, 93.4, 106.0, 84.5, 105.0, 104.3, 91.2, 83.5, 106.6, 92.3]
+
+	        }, {
+	            name: 'London',
+	            data: [48.9, 38.8, 39.3, 41.4, 47.0, 48.3, 59.0, 59.6, 52.4, 65.2, 59.3, 51.2]
+
+	        }, {
+	            name: 'Berlin',
+	            data: [42.4, 33.2, 34.5, 39.7, 52.6, 75.5, 57.4, 60.4, 47.6, 39.1, 46.8, 51.1]
+
+	        }]
+	    });
+}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td><button type="button" id="">城市数量报表</button></td>
+						<td><button type="button" id="">转化率统计</button></td>
+						<td><button type="button" id="">活跃会员</button></td>
+						<td><button type="button" id="">全体会员</button></td>
+						<td><button type="button" id="">会员细分</button></td>
+						<td style="padding-left: 12px; padding-right: 5px;">
+							新增时间：
+							<input id="startDateSearch" onkeydown="return keyLogins(event)" data-xtype="text" style="width:146px;" class="form-control"/> -
+							<input onkeydown="return keyLogins(event)" id="endDateSearch" data-xtype="text" style="width:146px;" class="form-control"/>
+						</td>
+						<td>
+							<button id="fastSearchChart" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+							<button id="ecportSearchChart" title="导出" style="margin-left:0px;">导出</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data">会员增长报表</div>
+		</div>
+		<div class="highChart-container" id="container"></div>
+	</div>
+	<!-- 新增模板 -->
+	<div class="page-add-panel full-drop-panel">
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="addSave"><i class="fa fa-check"></i>保存</button>
+					<button id="addCancel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content gift-add-table active-add-table">
+				<table >
+					<tr><td>平台类型：</td><td class="content-left"><select data-xtype="chosen" style="width:178px;"></select></td>
+						<td>图片地址：</td>
+						<td class="content-left" style="cursor:pointer;position:relative;">
+							<img style="width:180px;height:100px;" id="uploadPicAddImg" title="上传照片"/>
+							<input type="file" id="uploadPicAdd" style="cursor:pointer;position:absolute;left:0;top:0;z-index:1;width:180px;height:100px;opacity:0;filter:alpha(opacity=0;)"/>
+						</td>
+					</tr>
+					<tr><td>账号类型：</td><td class="content-left"><select data-xtype="chosen" style="width:178px;"></select></td>
+						<td>账号编号：</td><td class="content-left"><input /></td>
+					</tr>
+					<tr><td>昵称：</td><td class="content-left"><input /></td></tr>
+					<tr><td><label for="account">正式默认账号：</label></td><td class="content-left"><input id="account" type="checkbox"/></td></tr>
+					<tr><td>登陆名：</td><td class="content-left"><input /></td></tr>
+					<tr><td>密码：</td><td class="content-left"><input /></td>
+						<td>确认密码：</td><td class="content-left"><input /></td>
+					</tr>
+					<tr><td>账号描述：</td><td class="content-left"><input /></td>
+						<td>备注：</td><td class="content-left"><input /></td>
+					</tr>
+					<tr><td>注册门店：</td><td class="content-left"><select data-xtype="chosen" style="width:178px;"></select></td></tr>
+					<tr><td>应用ID：</td><td class="content-left"><input /></td>
+						<td>应用秘钥：</td><td class="content-left"><input /></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

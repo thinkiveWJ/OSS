@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../theme/default/ui.treeview.css" rel="stylesheet" />
+<link href="../../theme/default/page.personManagement.css" rel="stylesheet" />
+<link href="../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../js/jquery.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../js/page.common.js"></script>
+<link rel="stylesheet" href="../../theme/default/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="../../js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="../../js/jquery.ztree.excheck.js"></script>
+<script type="text/javascript" src="../../js/ui.getDictionaryData.js"></script>
+    <style>
+/*     .t-left-panel{width:238px;position: absolute;left:12px;top:12px;bottom:12px;border:1px solid #ccc;z-index:8;} */
+/*     .t-content-panel{position: absolute;left:250px;top:0px;bottom:0px;right:0px;} */
+/*     .left-search-shop{margin:5px;} */
+.t-left-panel{
+    background-color: white;
+    display: none;
+    height: 100%;
+    position: absolute;
+    width: 226px;
+    z-index: 2;
+    border-right:1px solid #ccc;
+}
+.page-editor-panel input[type="text"]{padding:3px;} 
+.t-left-panel{position:relative;}
+.t-left-panel .toolbar{padding:12px;}
+.t-left-panel-title{height:30px;background:#018659;width:100%;}
+/* #treeDemo{height:200px;} */
+.t-left-panel .tree-button{position:absolute;buttom:0px;left:0;height:50px;width:236px;bakcground:#fca2ca;}
+.t-left-panel .tree-button a{width:95px;margin:10px 0 10px 12px ;height:30px;line-height:30px;text-align:center;color:#fff;background:#018659;}
+.org-detail-panel .imgBox2{width:180px;border:1px solid #ccc;}  
+.org-detail-panel .imgBox2 .imgType{color:#fd5354;font-size:12px;line-height:20px;width:156px;padding:0 12px;} 
+.org-detail-panel .imgBox2 .imgType1{border-top:1px solid #ccc;} 
+    </style>
+<script type="text/javascript">
+	var listId = "#list2", exportKey="brand",
+	editorFormId = "#editorForm", 
+	pagerId = '#pager2', 
+	listUrl = "../../user/initUserManager.do",
+	queryList="../../user/paginateUserList.do",
+	resetPasswordUrl="../../user/resetPassword.do";
+	
+	$(function() {
+	   $("#borthday,#inductionDate").datepicker();
+		_initButtons({
+			fastSearch:function(){
+				var userName=$("#fastQueryText").val();
+				$(listId).jqGrid("setGridParam", {page:1,url : queryList,postData:{userName:userName}}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+		});//from page.common.js
+		_initFormControls();
+		_initValidateForXTypeForm();
+		//初始化所有下拉列表
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden:true},
+			     			{name : 'deptName',width : 200,align:"center"},
+			     			{name : 'storeName',autoWidth:true,align:"center"}, 
+// 			     			{name : 'userCode',width : 100,align:"center"},
+			     			{name : 'userName',width : 160,align:"center"},
+			     			{name : 'positionName',width : 100,align:"center"},
+			     			{name : 'roleName',autoWidth : true,align:"center"}, 
+// 			     			{name : 'gender',width : 100,align : "center",
+// 			     				formatter:function(arg1,arg2,arg3){
+// 			     					return $.fn.getDictionary("gender",arg3.gender);
+// 			     				}
+// 			     			},
+			     			{name : 'mobile',width : 80,align:"center"},
+// 			     			{name : '',width : 100,align : "center",formatter:function(arg1,arg2,arg3){
+// 			     				return '<button class="wj-jqgrid-button" button class="wj-jqgrid-button" onclick="editButton(\''+arg3.userId+'\')">编辑</button>';
+// 			     			}},
+			     			{name : '',width : 80,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="resetPasswordButton(\''+arg3.userId+'\')">重置密码</button>';
+			     			}}
+			     			], 
+			     			_colNames = ['','所属部门','所属门店','员工姓名','员工岗位','员工角色','联系方式','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+	});
+	/***重置密码****/
+	function resetPasswordButton(userId){
+		$("#resetPassword").dialog({
+			modal:true,
+			buttons:[
+			         {
+			        	 text:"确认",
+			        	 click:function(){
+			        		 POST(resetPasswordUrl,JSON.stringify({userId:userId}),function(result){
+			        			 if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			        					window.message({title:"提示信息",text: result.rspMsg});
+			        					return;
+			        				}
+			        			 $("#resetPassword").dialog("close");
+			        		 });
+			        	 }
+			         },
+			         {
+			        	 text:"取消",
+			        	 click:function(){
+			        		 $(this).dialog("close");
+			        	 }
+			         }
+			         ]
+		});
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var userName=$("#fastQueryText").val();
+			$(listId).jqGrid("setGridParam", {page:1,url : queryList,postData:{userName:userName}}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+</script>
+</head>
+<body><form id="exportExcelForm" method="post"><input type="hidden" name="data"/></form>
+	<div class="page-list-panel">
+	   <div class="t-content-panel">
+		<div class="head-panel">
+			<div class="search-panel">
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0"
+					border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i
+							class="fa fa-list-ul micon"></i></td>
+						<td style="padding-left: 30px; padding-right: 5px;"><input placeholder="输入员工姓名查询" onkeydown="return keyLogin(event)"
+							id="fastQueryText" type="text"
+							style="line-height: 1em; font-size: 1em; cursor: text;width:120px;" class="form-control" /></td>
+						<td>
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+		<div id="resetPassword" style="display:none;height:60px;line-height:30px;text-align:center">重置默认密码为：<br/>hotwind123</div>
+		</div>
+	</div>
+	
+</body>
+</html>

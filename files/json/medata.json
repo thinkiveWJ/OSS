@@ -1,0 +1,29 @@
+﻿{
+    "tasks": {
+        "hq-task": {
+            "total": 100,
+            "source": [
+                { "id": "xds-0001", "code": "800022", "title": "北京肯德基" },
+                { "id": "xds-0002", "code": "800023", "title": "北京西城肯德基" },
+                { "id": "xds-0003", "code": "800024", "title": "北京成绩肯德基" },
+                  { "id": "xds-0004", "code": "800025", "title": "北京肯德基" },
+                { "id": "xds-0005", "code": "800026", "title": "北京西城肯德基" },
+                { "id": "xds-0006", "code": "800027", "title": "北京成绩肯德基" }
+            ]
+        },
+        "zf-task": { "total": 200, "source": [ ] },
+        "cy-task": { "total": 300, "source": [ ] }
+    },
+    "progress": {
+        "jde": { "statusLabel": "已完成", "progressValue": 100 },
+        "sjcj": { "statusLabel": "已完成", "progressValue": 100 },
+        "sjjy": { "statusLabel": "校验中", "progressValue": 45 },
+        "ss": { "statusLabel": "未启动", "progressValue": 0 },
+        "cyfx": { "statusLabel": "未启动", "progressValue": 0 },
+        "sbb": { "statusLabel": "未启动", "progressValue": 0 }
+    },
+    "timeline": {
+
+    },
+    "type": "all"
+}

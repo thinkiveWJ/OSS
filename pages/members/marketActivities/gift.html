@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.treeview.css" rel="stylesheet" />
+<link href="../../../theme/default/page.personManagement.css" rel="stylesheet" />
+<link href="../../../theme/default/page.members.css" rel="stylesheet" />
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<link rel="stylesheet" href="../../../theme/default/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="../../../js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="../../../js/jquery.ztree.excheck.js"></script>
+<style>
+</style>
+<script type="text/javascript">
+	var listId = "#list2", exportKey="brand",
+	editorFormId = "#editorForm", 
+	pagerId = '#pager2', 
+	loadUrl = "../../../masterdata/brand.do?command=load", 
+	deleteUrl = "../../../masterdata/brand.do?command=delete", 
+	saveUrl = "../../../masterdata/brand.do?command=submit", 
+	listUrl = "../../../masterdata/brand.do?command=search";
+
+	$(function() {
+		_initButtons({
+			insertBTN : function() {
+				showSlidePanel(".page-add-panel");
+			},
+			addCancelBTN:function(){
+				hideSlidePanel(".page-add-panel");
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		_initValidateForXTypeForm(editorFormId);
+		
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'brandName',width : 250}, 
+			     			{name : 'brandAbbreviation',width : 200,align:"center"},
+			     			{name : 'remark',autoWidth : true}, 
+			     			{name : 'status',width : 100,align : "center"},
+			     			{name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'brandAbbreviation1',width : 200,align:"center"},
+			     			{name : 'remark1',autoWidth : true}, 
+			     			{name : 'status1',width : 100,align : "center"},
+			     			{name : 'id1',key : true,width : 60,hidden : true},
+			     			{name : '',width : 250,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="detailButton(\''+arg3.id+'\')">编辑数量</button>';
+			     			}}
+			     			], 
+			     			_colNames = [' ','序号', '礼券名称', '生成数', '发放数', '已使用','未使用','作废数量','积分数','创建时间','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {datatype : "local",colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		var	mydata=[{
+			id:"dasfad",brandName:'110101',brandAbbreviation:'东城区',remark:'110100',
+				status:'110101',id1:'东城区',brandName1:'110100'
+				
+		}];
+		for(var i=0; i<mydata.length; i++)  //循环给每行添加数据
+		{
+		$(listId).jqGrid('addRowData',i+1,mydata[i]);
+		}
+		resizeFun();
+	});
+	function detailButton(arg3){
+		showSlidePanel(".page-editor-panel1");
+	}
+</script>
+</head>
+<body><form id="exportExcelForm" method="post"><input type="hidden" name="data"/></form>
+	<div class="page-list-panel">
+	   <div class="t-content-panel">
+		<div class="head-panel">
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0"
+					border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i
+							class="fa fa-list-ul micon"></i></td>
+						<td class="buttons">
+							<button id="insertBTN">
+								<i class="fa fa-plus"></i>新增
+							</button>
+						</td>
+						<td style="padding-left: 24px; padding-right: 5px;"><input placeholder="可以输入礼券名称查询"
+							id="fastQueryText" type="text"
+							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td>
+						<td>
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+		</div>
+	</div>
+	
+	<!-- 新增 -->
+	<div class="page-add-panel full-drop-panel">
+		<div class="title-bar">
+			<h4>
+				<i class="fa fa-plus"></i>礼券新增
+			</h4>
+			<div class="btn-area page-detail-panel-content1">
+				<div style="margin-top: 4px;">
+					<button id="editorBTN">
+						<i class="fa fa-check"></i>保存
+					</button>
+					<button id="addCancelBTN">
+						<i class="fa fa-times"></i>取消
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content gift-add-table">
+				<table >
+					<tr>
+						<td>礼券名称：</td><td class="content-left"><input type="text"/></td>
+						<td>兑换所需积分：</td><td class="content-left"><input type="text" placeholder="空或0表示不可换"/></td>
+					</tr>
+					<tr>
+						<td>编码前缀：</td><td class="content-left"><input type="text"/></td>
+						<td>最大发放数：</td><td class="content-left"><input type="text" placeholder="空或0表示不可换"/></td>
+					</tr>
+					<tr><td>编码长度：</td><td class="content-left"><input type="text" placeholder="6到9位数字"/></td></tr>
+					<tr>
+						<td><input type="radio" name="effectDays"/>有效天数：</td>
+						<td class="content-left"><input type="text"/></td>
+						<td><input type="radio" name="effectDays"/>有效时间：</td>
+						<td class="content-left colspan2"><input data-xtype="datetime" name="effectStartDate"/> - <input data-xtype="datetime" name="effectEndDate"/></td>
+					</tr>
+					<tr>
+						<td>消费金额满：</td>
+						<td class="content-left"><input type="text"/>&nbsp;元</td>
+						<td class="radio">
+							<input type="radio" name="preferential"/>减：<input type="text"/>&nbsp;元
+						</td>
+						<td class="radio">
+							<input type="radio" name="preferential"/>一口价：<input type="text"/>&nbsp;元/件
+						</td>
+					</tr>
+					<tr>
+						<td>消费数量满：</td>
+						<td class="content-left"><input type="text"/>&nbsp;件</td>
+						<td class="radio">
+							<input type="radio" name="preferential"/>送：<input type="text"/>&nbsp;元
+						</td>
+						<td class="radio">
+							<input type="radio" name="preferential"/>点评网抵扣：<input type="text" style="width:97px"/>&nbsp;元
+						</td>
+					</tr>
+					<tr>
+						<td>购买：</td>
+						<td  class="content-left">
+							<select style="width:150px;" data-xtype="chosen" name="buy">
+								<option>商品类型</option>
+								<option>商品类型</option>
+							</select>
+						</td>
+						<td class="radio"><input type="radio" name="preferential"/>换购：<input type="text"/>&nbsp;元</td>
+						<td class="radio"><input type="radio" name="preferential"/>交通银行卡9.5折</td>
+					</tr>
+					<tr>
+						<td>选择时间条件：</td>
+						<td class="content-left colspan2"><input data-xtype="datetime" name="chooseStartTime"/> - <input data-xtype="datetime" name="chooseEndTime"/></td>
+						<td class="radio">
+							<input type="radio" name="preferential"/>送礼品：<select style="width:102px;" data-xtype="chosen" name="sendGift"><option>送礼品</option></select>
+						</td>
+						<td class="radio"><input type="radio" name="preferential"/>学生会员价9.5折</td>
+					</tr>
+					<tr>
+						<td>方式:</td>
+						<td  class="content-left">
+							<select style="width:150px;" data-xtype="chosen" name="">
+								<option>微信支付</option>
+							</select>
+						</td>
+						<td><input type="radio" name="preferential"/>送优惠券：</td>
+						<td  class="content-left">
+							<select style="width:150px;" data-xtype="chosen">
+								<option>优惠券</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>细则说明：</td>
+						<td colspan=3><textarea style="width:100%;height:100%;text-indent:3px;"></textarea></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	<!-- 编辑数量 -->
+	<div class="page-edit-panel full-drop-panel">
+		<div class="title-bar">
+			<h4>
+				<i class="fa fa-plus"></i>
+			</h4>
+			<div class="btn-area page-detail-panel-content1">
+				<div style="margin-top: 4px;">
+					<button id="editorBTN">
+						<i class="fa fa-pencil"></i>编辑
+					</button>
+					<button id="cancelBTN">
+						<i class="fa fa-times"></i>取消
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				
+			</div>
+		</div>
+	</div>
+</body>
+</html>

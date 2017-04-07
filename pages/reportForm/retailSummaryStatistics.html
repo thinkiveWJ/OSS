@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../js/jquery.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../js/page.common.js"></script>
+<script type="text/javascript" src="../../js/ui.getDictionaryData.js"></script>
+<style type="text/css">
+.pay-info-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.pay-choose-channel input[type='radio']{vertical-align:middle;}
+.pay-choose-channel  .channel-details{margin:12px auto;}
+.width120{width:100px;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	listUrl = "../../reportForms/inquiryPayInfoGatherByGoods.do";
+	
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{styleName:$("#fastQueryText").val()}}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch:function(){
+				var postData={};
+				var storeName=$("#storeSearch").val();
+				var payModeID=$("#payFuncSearch").data("chosen").selectedItem();
+				payModeID=payModeID?payModeID["value"]:"";
+				postData={storeName:storeName,payModeId:payModeID};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			exportForm:function(){
+				$("#searchForm").submit();
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'bigTypeName',autoWidth : true,align:"center"}, 
+			     			{name : 'smallTypeName',autoWidth : true,align : "center"},
+			     			{name : 'subQry',autoWidth : true,align:"center"},
+			     			{name : 'price',autoWidth : true,align:"center"}, 
+			     			{name : 'refPrice',autoWidth : true,align : "center"},
+			     			{name : 'discount',autoWidth : true,align:"center"},
+			     			{name : 'totalAmount',autoWidth : true,align:"center"}, 
+			     			{name : 'discountAmount',autoWidth : true,align : "center"},
+			     			{name : 'numRate',autoWidth : true,align:"center"},
+			     			{name : 'amountRate',autoWidth : true,align : "center"}
+			     			], 
+			     			_colNames = [' ', '系列', 'attribn','数量', '单价','参考价','折扣','总金额','折扣金额','数量%','金额%'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		
+	});
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        $(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{styleName:$("#fastQueryText").val()}}).hideCol("somecol").trigger("reloadGrid");
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="exportForm"><i class="fa fa-paperclip"></i>导出</button></td>
+						<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" enctype="multipart/form-data;" method="post">
+							<input name="fileName"  value="oss/reportForm/inquiryPayInfoGatherByGoods.xlsx" type="hidden"/>
+    					    <input name="componentName" value="inquiryPayInfoGatherByGoods" type="hidden"/>
+							<td style="padding-left: 24px; padding-right: 5px;"><input
+								id="fastQueryText" xdata-type="text" name="styleName" placeholder="输入商品名称查询" onkeydown="return keyLogin(event)"
+								style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td>
+						</form>
+						<td>
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	
+</body>
+</html>

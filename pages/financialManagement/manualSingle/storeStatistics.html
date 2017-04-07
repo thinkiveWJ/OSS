@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<style type="text/css">
+.history-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.page-content .select{padding-left:24px;height:60px;line-height:60px;}
+table.single-table{width:100%;margin-top:24px;border:solid #ccc; border-width:1px 0px 0px 1px;text-align:center;}
+table.single-table td{border:solid #ccc; border-width:0px 1px 1px 0px;line-height:30px;}
+table.single-table td.ensure input{padding:0;height:20px;line-height:20px;text-indent:3px;margin-right:5px;}
+table.single-table td.ensure a{display:inline-block;width:60px;height:24px;line-height:24px;background:#01a06a;color:#fff;text-align:center;}
+table.single-table td.ensure a:hover{background:#018659;}
+table.single-table td.send a,table.single-table td.chonse-store a{display:inline-block;padding:0 12px;background:#01a06a;color:#fff;height:24px;line-height:24px;text-align:center;}
+table.single-table td.send a:hover,table.single-table td.chonse-store a:hover{background:#018659;}
+.page-editor-panel{position:relative;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	listUrl = "../../../manualSale/showStoreBatchList.do",
+	querySingleCodeUrl="../../../manualSale/showStoreIdList.do",
+	queryCityAreaUrl="../../../org/findDistrictListByCityId.do",
+	queryStoreUrl="../../../org/findStoreListByDistrictId.do",
+	queryUpdateUrl="../../../manualSale/loadStoreBatch.do",
+	updateUrl="../../../manualSale/updateStoreBatch.do",
+	singleSendOKUrl="../../../manualSale/dispatchStore.do",
+	deleteUrl="../../../manualSale/deleteStoreBatch.do",
+	queryEditSingleCodeUrl="../../../manualSale/showStoreIdList4UpdateStore.do";
+	
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				var dataArr={districtId:"",storeId:"",beginDate:"",endDate:"",beginSaleId:addend8($("#fastQueryText").val()),endSaleId:""};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:dataArr}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch:function(){
+				var dataArr={};
+				var districtId=$("#searchCityArea").data("chosen").selectedItem();
+				districtId=districtId?districtId["value"]:"";
+				var storeId=$("#searchStore").data("chosen").selectedItem();
+				storeId=storeId?storeId["value"]:"";
+				var startDate=$("#searchStartDate").val();
+				var endDate=$("#searchEndDate").val();
+				var beginSaleId=addend8($("#searchStartCode").val());
+				var endSaleId=addend8($("#searchEndCode").val());
+				if(storeId){
+					dataArr={districtId:"",storeId:storeId,beginDate:startDate,endDate:endDate,beginSaleId:beginSaleId,endSaleId:endSaleId};
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:dataArr}).hideCol("somecol").trigger("reloadGrid"); 
+				}else if(districtId){
+					dataArr={districtId:districtId,storeId:"",beginDate:startDate,endDate:endDate,beginSaleId:beginSaleId,endSaleId:endSaleId};
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:dataArr}).hideCol("somecol").trigger("reloadGrid"); 
+				}else{
+					dataArr={districtId:"",storeId:"",beginDate:startDate,endDate:endDate,beginSaleId:beginSaleId,endSaleId:endSaleId};
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:dataArr}).hideCol("somecol").trigger("reloadGrid"); 
+				}
+				
+			},
+			exportForm:function(){
+				var districtId=$("#searchCityArea").data("chosen").selectedItem();
+				districtId=districtId?districtId["value"]:"";
+				$("#districtIdForm").val(districtId);
+				var storeId=$("#searchStore").data("chosen").selectedItem();
+				storeId=storeId?storeId["value"]:"";
+				$("#storeIdForm").val(storeId);
+				$("#beginSaleIdInput").val(addend8($("#searchStartCode").val()));
+				$("#endSaleIdInput").val(addend8($("#searchEndCode").val()));
+				$("#searchForm").submit();
+			}
+			
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'districtName',width : 250,align:"center"}, 
+			     			{name : 'storeName',width : 100,align : "center"},
+			     			{name : 'modifyDate',width : 150,align:"center"},
+			     			{name : '',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return addend8(arg3.beginSaleId);//拼凑8位字符串
+			     			}}, 
+			     			{name : '',width : 150,align : "center",formatter:function(arg1,arg2,arg3){
+			     				return addend8(arg3.endSaleId);//拼凑8位字符串
+			     			}},
+			     			{name : 'saleCount',width : 100,align:"center"},
+			     			{name : 'unSaleCount',width : 250,align:"center"}, 
+			     			{name : '',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return arg3.saleCount-arg3.unSaleCount;
+			     			}}, 
+			     			{name : '',width : 250,align:"center",
+			     				formatter:function(arg1,arg2,arg3){
+			     					if(arg3.saleCount==arg3.unSaleCount){
+					     				return '<button class="wj-jqgrid-button" onclick="editButton(\''+arg3.storeBatchNo+'\')">修改</button>'+
+						     					'<button class="wj-jqgrid-button" onclick="deleteteButton(\''+arg3.storeBatchNo+'\')">删除</button>';
+				 					}
+				 					return '<button class="wj-jqgrid-button-disabled" disabled>修改</button>'+
+				 							'<button class="wj-jqgrid-button-disabled" disabled>删除</button>';
+			     				}
+			     			}
+			     			], 
+			     			_colNames = ['', '区域小区', '门店', '派发日期', '手工单起始号','手工单终止号','手工单数量','未领取','已领取','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId,postData:{cityId:sessionStorage.getItem("cityId")}}));
+		resizeFun();
+		//初始化搜索下拉框
+		initSearchSelect();
+		//点击门店派发
+		$("#storeSend").unbind('click').bind('click',function(){
+// 			showSlidePanel(".page-editor-panel");
+			editButton(true);
+		});
+		//搜索条件的时间区间
+		$("#searchStartDate").datepicker({
+			onClose: function( selectedDate ) {
+		        $( "#searchEndDate" ).datepicker( "option", "minDate", selectedDate );
+		      }
+		});
+		$("#searchEndDate").datepicker({
+			onClose: function( selectedDate ) {
+		        $( "#searchStartDate" ).datepicker( "option", "maxDate", selectedDate );
+		      }
+		});
+	});
+	/*****初始化搜索下拉框*******/
+	function initSearchSelect(){
+		var cityId=sessionStorage.getItem("cityId");
+		POST(queryCityAreaUrl,JSON.stringify({cityId:cityId}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			//填充区域
+			var result=result.rows;
+			for(var i in result){
+				result[i]={value:result[i].districtId,text:result[i].districtName};
+			}
+			result.unshift({value:"",text:"请选择城区"});
+			$("#searchCityArea").data("chosen")._clearOptions();
+			$("#searchCityArea").data("chosen")._addOptions(result);
+			$("#searchStore").data("chosen")._addOptions([{text:"请选择门店",value:""}]);
+			$("#searchCityArea").unbind("change").bind("change",function(){
+				//查询区域下的城市
+				var districtId=$("#searchCityArea").data("chosen").selectedItem();
+				if(districtId){
+					districtId=districtId["value"];
+					$(this).parent().next().find("select[data-xtype='chosen']").data("chosen")._enabled();
+				}else{
+					$(this).parent().next().find("select[data-xtype='chosen']").data("chosen")._disabled();
+					$(this).parent().next().find("select[data-xtype='chosen']").data("chosen")._clearOptions();
+					return;
+				}
+				POST(queryStoreUrl,JSON.stringify({districtId:districtId}),function(result){
+					if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+						window.message({title:"提示信息",text: result.rspMsg});
+						return;
+					}
+					var result=result.rows;
+					for(i in result){
+						result[i]={text:result[i].storeName,value:result[i].storeId};
+					}
+					result.unshift({value:"",text:"请选择门店"});
+					$("#searchStore").data("chosen")._clearOptions();
+					$("#searchStore").data("chosen")._addOptions(result);
+				});
+			});
+		});
+	}
+	/*******点击修改按钮***/
+	function editButton(cityBatchNo){
+		var cityId=sessionStorage.getItem("cityId");//以后从登陆接口中获取
+		var singleEditAddUrl="",singleArr={};
+		$("#singleSendCanle").unbind('click').bind('click',function(){
+			$(".single-page-content").dialog("close");
+		});
+		$(".single-page-content").dialog({modal:true,width:450});
+		if(cityBatchNo!=true){
+			singleEditAddUrl=queryEditSingleCodeUrl;
+			singleArr={storeBatchNo:cityBatchNo,cityId:cityId};
+		}else{
+// 			singleEditAddUrl=querySingleCodeUrl;
+// 			singleArr={cityId:cityId};
+			$("#singleNum").val("");
+			$("#singleShowNum").html("手工单派发数(0)");
+			$("#sendArea").data("chosen")._clearOptions();
+			$("#sendCity").data("chosen")._clearOptions();
+			$("#sendCity").data("chosen")._disabled();
+			//填充手工单派发数据
+			fillSingleData({},cityBatchNo,cityId);
+			return;
+		}
+		POST(singleEditAddUrl,JSON.stringify(singleArr),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			$(".single-page-content").dialog({modal:true,width:450});
+			//填充手工单派发数据
+			fillSingleData(result,cityBatchNo,cityId);
+		});
+	}
+	/***********填充手工单派发数据********/
+	function fillSingleData(result,cityBatchNo,cityId){
+		var result=result.rows;
+		for(i in result){
+			result[i]={text:result[i],value:result[i]};
+		}
+// 		result.unshift({text:"",value:""});
+// 		$("#startCode").data("chosen")._clearOptions();
+// 		$("#startCode").data("chosen")._addOptions(result);
+		$("#startCode").val("");
+		$("#endCode").val("");
+// 		$("#endCode").data("chosen")._clearOptions();
+// 		$("#endCode").data("chosen")._addOptions(result);
+		$("#singleNum").keyup(function(){
+			if($(this).val()==0){
+				window.message({text:"手工单派发数不能为0！",title:"提示信息"});
+				return;
+			}
+			$("#singleShowNum").html("手工单派发数("+$(this).val()+")");
+			var startCode=Number($("#startCode").val()+"");
+			var codeNum=Number($(this).val()+"");
+			var endCode=startCode+codeNum-1;
+			$("#endCode").val(addend8(endCode));
+// 			linkage(result);
+		});
+		$("#startCode").keyup(function(){
+			var startCode=Number($(this).val()+"");
+			var codeNum=Number($("#singleNum").val()+"");
+			var endCode=startCode+codeNum-1;
+			$("#endCode").val(addend8(endCode));
+// 			linkage(result);
+		});
+		//查询区域和城市点击确定按钮
+		queryAreaCity(cityBatchNo,cityId);
+	}
+	/*****联动****/
+// 	function linkage(result){
+// 		var text=$("#startCode").data("chosen").selectedItem();
+// 		if(!text){
+// 			return;
+// 		}
+// 		text=text["value"];
+// 		var index="";
+// 		for(var i in result){
+// 			if(text==result[i]["text"]){
+// 				index=i+"";
+// 				break;
+// 			}
+// 		}
+// 		var num=$("#singleNum").val()+"";
+// 		var endSelectVal=Number(text)+Number(num)-1;
+// 		num=Number(num)+Number(index)-1;
+// 		var endCodeVal=result[num];
+// 		if(endCodeVal){
+// 			endCodeVal=endCodeVal["value"];
+// 			if(endSelectVal==endCodeVal){
+// 				$("#endCode").val(endCodeVal);
+// 			}else{
+// 				window.message({
+// 					text:"手工单的起始号与终止号之间存在断号，请重新选择！",
+// 					title:"提示信息"
+// 				});
+// 				return;
+// 			}
+// 		}else{
+// 			window.message({
+// 				text:"输入派发数量过大，请重新输入！",
+// 				title:"提示信息"
+// 			});
+// 			return;
+// 		}
+// 	}
+	/*******查询区域和城市点击确定按钮/点击编辑*******/
+	function queryAreaCity(cityBatchNo,cityId){
+		if(cityBatchNo!=true){
+			$("#singleSendOK").html("确定");
+		}else{
+			$("#singleSendOK").html("派发");
+		}
+		POST(queryCityAreaUrl,JSON.stringify({cityId:cityId}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			//填充区域
+			var result=result.rows;
+			for(var i in result){
+				result[i]={text:result[i].districtName,value:result[i].districtId};
+			}
+			result.unshift({value:"",text:"请选择城区"});
+			$("#sendArea").data("chosen")._clearOptions();
+			$("#sendArea").data("chosen")._addOptions(result);
+			$("#sendCity").data("chosen")._addOptions([{text:"请选择门店",value:""}]);
+			$("#sendArea").unbind("change").bind("change",function(){
+				//查询区域下的城市
+				var districtId=$("#sendArea").data("chosen").selectedItem();
+				if(districtId){
+					districtId=districtId["value"];
+					$("#sendCity").data("chosen")._enabled();
+				}else{
+					$("#sendCity").data("chosen")._disabled();
+					$("#sendCity").data("chosen")._clearOptions();
+					return;
+				}
+				POST(queryStoreUrl,JSON.stringify({districtId:districtId}),function(result){
+					if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+						window.message({title:"提示信息",text: result.rspMsg});
+						return;
+					}
+					var result=result.rows;
+					for(i in result){
+						result[i]={text:result[i].storeName,value:result[i].storeId};
+					}
+					$("#sendCity").data("chosen")._clearOptions();
+					$("#sendCity").data("chosen")._addOptions(result);
+				});
+			});
+			clickSendBTN(cityBatchNo);
+			if(cityBatchNo!=true){
+				//初始化编辑信息
+				var dataArr={storeBatchNo:cityBatchNo};
+				var editPanelId="#singlePanel";
+				var deptListFlag={dataListFlag:true,storeFlagUrl:queryStoreUrl,sendCity:"#sendCity"};
+				editInfoButton(queryUpdateUrl,dataArr,editPanelId,deptListFlag);
+			}else{
+				$("#sendCity").data("chosen")._clearOptions();
+				$("#sendCity").data("chosen")._addOptions({text:"",value:""});
+			}
+		});
+	}
+	/********点击派发*******/
+	function clickSendBTN(cityBatchNo){
+		//点击派发
+		$("#singleSendOK").unbind('click').bind('click',function(){
+			var begiSaleId=$("#startCode").val();
+			if(!/^[0-9]+$/.test(begiSaleId)){
+				window.message({
+					text:"请输入8位有效的手工单起始号！",
+					title:"提示信息"
+				});
+				return;
+			}
+			var endSaleId=$("#endCode").val();
+// 			if(endSaleId){
+// 				endSaleId=endSaleId["text"];
+// 			}else{
+// 				window.message({
+// 					text:"请输入手工单终止号！",
+// 					title:"提示信息"
+// 				});
+// 				return;
+// 			}
+			var districtId=$("#sendArea").data("chosen").selectedItem();
+			if(districtId){
+				districtId=districtId["value"];
+			}else{
+				window.message({text:"请选择城区！",title:"提示信息"});
+				return;
+			}
+			var storeId=$("#sendCity").data("chosen").selectedItem();
+			if(storeId){
+				storeId=storeId["value"];
+			}else{
+				window.message({text:"请选择门店！",title:"提示信息"});
+				return;
+			}
+			var saleCount=$("#singleNum").val();
+			if(saleCount==""||parseInt(saleCount)=="NaN"){
+				window.message({
+					text:"请输入有效的派发数量！",
+					title:"提示信息"
+				});
+				return;
+			}
+			var dataArr="",url="";
+			if(cityBatchNo!=true){
+				url=updateUrl;
+				dataArr={data:{beginSaleId:begiSaleId,endSaleId:endSaleId,storeId:storeId,districtId:districtId,saleCount:saleCount,batchNo:cityBatchNo}};
+			}else{
+				url=singleSendOKUrl;
+				dataArr={data:{beginSaleId:begiSaleId,endSaleId:endSaleId,storeId:storeId,districtId:districtId,saleCount:saleCount}};
+			}
+			POST(url,JSON.stringify(dataArr),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				$(".single-page-content").dialog("close");
+				$(listId).trigger("reloadGrid");
+			})
+		});
+	}
+	/***删除按钮****/
+	function deleteteButton(cityBatchNo){
+		deleteInfoButton(deleteUrl,{storeBatchNo:cityBatchNo});
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var dataArr={districtId:"",storeId:"",beginDate:"",endDate:"",beginSaleId:addend8($("#fastQueryText").val()),endSaleId:""};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:dataArr}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+    		var dataArr={};
+    		var districtId=$("#searchCityArea").data("chosen").selectedItem();
+    		districtId=districtId?districtId["value"]:"";
+    		var storeId=$("#searchStore").data("chosen").selectedItem();
+    		storeId=storeId?storeId["value"]:"";
+    		var startDate=$("#searchStartDate").val();
+    		var endDate=$("#searchEndDate").val();
+    		var beginSaleId=addend8($("#searchStartCode").val());
+    		var endSaleId=addend8($("#searchEndCode").val());
+    		if(storeId){
+    			dataArr={districtId:"",storeId:storeId,beginDate:startDate,endDate:endDate,beginSaleId:beginSaleId,endSaleId:endSaleId};
+    			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:dataArr}).hideCol("somecol").trigger("reloadGrid"); 
+    		}else if(districtId){
+    			dataArr={districtId:districtId,storeId:"",beginDate:startDate,endDate:endDate,beginSaleId:beginSaleId,endSaleId:endSaleId};
+    			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:dataArr}).hideCol("somecol").trigger("reloadGrid"); 
+    		}else{
+    			dataArr={districtId:"",storeId:"",beginDate:startDate,endDate:endDate,beginSaleId:beginSaleId,endSaleId:endSaleId};
+    			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:dataArr}).hideCol("somecol").trigger("reloadGrid"); 
+    		}
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" method="post">
+						<input name="fileName" type="hidden" value="oss/findManualSaleStoreBatch.xlsx" />
+    					<input name="componentName" type="hidden" value="findManualSaleStoreBatch" />
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">城区：
+									<input type="hidden" name="districtId" id="districtIdForm"/>
+									<select data-xtype="chosen" id="searchCityArea" style="width:208px;">
+									</select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">门店：
+									<input type="hidden" name="storeId" id="storeIdForm"/>
+									<select data-xtype="chosen" id="searchStore" style="width:208px;">
+									</select>
+								</td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+							<tr>
+								<input type="hidden"  name="beginSaleId" id="beginSaleIdInput"/>
+								<input type="hidden"  name="endSaleId" id="endSaleIdInput"/>
+								<td style="padding-left: 30px;text-align:right;">手工单起始号：&nbsp;<input id="searchStartCode" onkeydown="return keyLogins(event)" type="text"/></td>
+								<td style="padding-left: 30px;text-align:right;">手工单终止号：&nbsp;<input id="searchEndCode" onkeydown="return keyLogins(event)" type="text"/></td>
+							</tr>
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">
+									派发日期：
+									<input onkeydown="return keyLogins(event)" name="startDate"  id="searchStartDate" />
+									-
+									<input onkeydown="return keyLogins(event)" name="endDate"  id="searchEndDate"/>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0"
+					border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i
+							class="fa fa-list-ul micon"></i></td>
+						<td style="padding-left: 12px;"><button type="button" id="storeSend">门店派发</button></td>
+						<td class="buttons" ><button id="exportForm"><i class="fa fa-paperclip"></i>导出</button></td>
+<!-- 						<td class="buttons"><button id="modifyBTN"><i class="fa fa-plus"></i>修改备用金</button></td> -->
+<!-- 						<td class="buttons"><button id="historyBTN"><i class="fa fa-plus"></i>历史记录</button></td> -->
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="fastQueryText" xdata-type="text" placeholder="输入手工单起始号查询" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+		<div class="single-page-content hide">
+			<div class="single-write-panel" id="singlePanel">
+				<div class="single-content">
+					<div class="single-content-detail">需要派发数量：&nbsp;<input name="sale_count" id="singleNum" type="text"/></div>
+					<div class="single-content-detail">手工单起始号：<input type="text" style="margin-left:4px;" name="begin_sale_id" id="startCode"  />
+<!-- 						<select data-xtype="chosen" style="width:150px;" name="begin_sale_id" id="startCode"> -->
+<!-- 							<option>请选择</option> -->
+<!-- 						</select> -->
+					</div>
+					<div class="single-content-detail">手工单终止号：<input type="text" style="margin-left:4px;" name="end_sale_id" id="endCode"  disabled/>
+<!-- 						<select data-xtype="chosen" style="width:150px;" name="end_sale_id" id="endCode" disabled> -->
+<!-- 							<option>请选择</option> -->
+<!-- 						</select> -->
+					</div>
+					<div class="single-content-detail">选择派发范围：
+						<select data-xtype="chosen" style="width:150px;" name="district_id" id="sendArea"> 
+<!-- 							<option>选择区域</option> -->
+						</select>
+						<div style="width:100%;height:5px;"></div>
+						<span style="width:116px;display:inline-block;"></span><select data-xtype="chosen" style="width:150px;padding-left:24px;" name="store_id" id="sendCity">
+<!-- 							<option>选择城市</option> -->
+						</select>
+					</div>
+					<div class="single-content-detail" id="singleShowNum" style="color:#029f6a">手工单派发数(0)</div>
+				</div>
+				<div class="button">
+					<a class="left" id="singleSendOK">派发</a>
+					<a class="left" id="singleSendCanle">取消</a>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

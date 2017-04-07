@@ -1,0 +1,398 @@
+﻿﻿{
+    "success": true,
+    "response": [
+    	{
+            "menuName": "人员管理",
+            "cls": "person-management-icon",
+            "code": "nav-top",
+            "menus": [
+                {
+                    "menuName": "企业组织详情",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "pages/personManagement/organizationManger.html",
+                    "menus": [
+                    ]
+                }, {
+                    "menuName": "岗位管理",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "pages/personManagement/personManger.html",
+                    "menus": [
+                    ]
+                }, {
+                    "menuName": "角色管理",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "pages/personManagement/roleManger.html",
+                    "menus": [
+                    ]
+                }
+            ]
+        },
+        {
+            "menuName": "门店管理",
+            "cls": "store-maintain-icon",
+            "code": "contrast",
+            "menus": [
+            	{
+                    "menuName": "门店POS状态",
+                    "cls": "",
+                    "code": "mainDoc-sz",
+                    "url": "pages/storeManagement/pos/posOnOff.html",
+                    "menus": [
+                    	
+                    ]
+                },{
+                	"menuName": "第二屏播放情况",
+                    "cls": "",
+                    "code": "mainDoc-sz",
+                    "url": "pages/storeManagement/secondScreen/secondScreen.html",
+                    "menus": []
+                },
+                {
+                	"menuName": "门店小票机设定",
+                    "cls": "",
+                    "code": "mainDoc-sz",
+                    "url": "pages/storeManagement/smallTicketMachine/smallTicketMachine.html",
+                    "menus": []
+                },
+                {
+                    "menuName": "门店结算方式",
+                    "cls": "",
+                    "code": "mainDoc-sz",
+                    "url": "pages/storeManagement/settlementMethod/settlementMethod.html",
+                    "menus": []
+                }
+            ]
+        },
+        {
+            "menuName": "会员管理",
+            "cls": "member-maintain-icon",
+            "code": "mainDoc",
+            "menus": [
+            	{
+                    "menuName": "会员管理",
+                    "cls": "sale-icon",
+                    "code": "mainDoc-sz",
+                    "url": "pages/members/integralVoucher/couponList.html",
+                    "menus": [
+                    	{
+		                    "menuName": "会员列表",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/memberManagement/memberList.html",
+		                    "menus": []
+		                },
+		                {
+		                    "menuName": "会员标签",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/memberManagement/memberLabel.html",
+		                    "menus": []
+		                }
+                    ]
+                },
+            	{
+                	"menuName": "礼券积分",
+					"cls": "sale-icon",
+					"code": "reportTo",
+					"menus": [
+						{
+		                    "menuName": "礼券列表",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/integralVoucher/couponList.html",
+		                    "menus": []
+		                },
+						{
+		                    "menuName": "礼券发放历史",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/integralVoucher/couponGrantHistory.html",
+		                    "menus": []
+		                },
+		                {
+		                    "menuName": "礼券使用历史",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/integralVoucher/couponUseHistory.html",
+		                    "menus": []
+		                },
+		                {
+		                    "menuName": "积分规则",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/integralVoucher/integralRule.html",
+		                    "menus": []
+		                },
+		                {
+		                    "menuName": "积分系统",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/integralVoucher/integralSystem.html",
+		                    "menus": []
+		                }
+		            ]
+                },
+                {
+                	"menuName": "营销活动",
+					"cls": "sale-icon",
+					"code": "reportTo",
+					"menus": [
+						{
+		                    "menuName": "推送消息",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/marketActive/pushMessage.html",
+		                    "menus": []
+		                },
+						{
+		                    "menuName": "活动发放",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/marketActive/activityRelease.html",
+		                    "menus": []
+		                },
+		                {
+		                    "menuName": "历史活动查询",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/marketActive/historyActive.html",
+		                    "menus": []
+		                },
+		                {
+		                    "menuName": "账号管理",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/marketActive/accountManagement.html",
+		                    "menus": []
+		                }
+		            ]
+                },
+                {
+                	"menuName": "基础分析",
+					"cls": "sale-icon",
+					"code": "reportTo",
+					"menus": [
+		                {
+		                    "menuName": "会员类",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/members/baseAnalysis/memberClass.html",
+		                    "menus": []
+		                }
+		            ]
+                }
+            ]
+        },
+        {
+            "menuName": "促销管理",
+            "cls": "sale-icon",
+            "code": "reportTo",
+            "menus": [
+                {
+                    "menuName": "促销数据",
+                    "cls": "",
+                    "code": "mainDoc-sz",
+                    "url": "pages/sales/salesData.html",
+                    "menus": []
+                }
+            ]
+        },
+        {
+       	 	"menuName": "财务管理",
+            "cls": "goods-maintain-icon",
+            "code": "reportTo",
+             "menus": [
+             	{
+                    "menuName": "手工单管理",
+                    "cls": "",
+                    "code": "ysywlx",
+                    "url": "pages/members/marketActivities/gift.html",
+                    "menus": [
+                    	{
+		                    "menuName": "门店手工单入库",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/financialManagement/manualSingle/headOffice.html",
+		                    "menus": []
+		                },
+		                {
+		                    "menuName": "城市手工单派发统计",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/financialManagement/manualSingle/areaStatistics.html",
+		                    "menus": []
+		                },
+		                {
+		                    "menuName": "门店手工单派发统计",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/financialManagement/manualSingle/storeStatistics.html",
+		                    "menus": []
+		                },
+		                {
+		                    "menuName": "门店手工单使用明细",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/financialManagement/manualSingle/singleDetail.html",
+		                    "menus": []
+		                }
+                    ]
+                },
+                {
+                    "menuName": "门店存款维护",
+                    "cls": "",
+                    "code": "ysywlx",
+                    "url": "pages/members/marketActivities/gift.html",
+                    "menus": [
+                    	{
+		                	"menuName": "银行账户维护",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/financialManagement/depositMaintain/bankAccountMaintain.html",
+		                    "menus": [
+		                    
+		                    ]
+		                },
+		                {
+		                	"menuName": "门店账户维护",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/financialManagement/depositMaintain/storeAccountMaintain.html",
+		                    "menus": []
+		                },
+		                {
+		                	"menuName": "门店现金存款",
+		                    "cls": "",
+		                    "code": "mainDoc-sz",
+		                    "url": "pages/financialManagement/depositMaintain/storeCashDeposit.html",
+		                    "menus": []
+		                }
+                    ]
+                },
+                {
+                    "menuName": "备用金",
+                    "cls": "",
+                    "code": "ysywlx",
+                    "url": "pages/financialManagement/money/moneyManager.html",
+                    "menus": [
+                    ]
+                },
+                {
+                    "menuName": "营业外收入",
+                    "cls": "",
+                    "code": "ysywlx",
+                    "url": "pages/financialManagement/business/operatingBussiness.html",
+                    "menus": [
+                    ]
+                }
+             ]
+        },
+        {
+            "menuName": "报表管理",
+            "cls": "report-icon-wj",
+            "code": "report",
+            "menus": [
+                {
+                    "menuName": "销售报表",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/SaleReport",
+                    "menus": [
+                    ]
+                }, 
+                {
+                    "menuName": "零售明细统计",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/RetailDetailTotalReport.aspx",
+                    "menus": [
+                    ]
+                }, 
+                {
+                    "menuName": "零售汇总统计",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/RetailTotalReport.aspx",
+                    "menus": [
+                    ]
+                }, {
+                    "menuName": "零售日汇总统计",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/RetailDayTotalReport.aspx",
+                    "menus": [
+                    ]
+                },
+                {
+                    "menuName": "零售月汇总统计",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/RetailMonthTotalReport.aspx",
+                    "menus": [
+                    ]
+                },
+                {
+                    "menuName": "销售单查询报表",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/SaleOrderReport.aspx",
+                    "menus": [
+                    ]
+                },
+                {
+                    "menuName": "小票销售明细查询",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/StroeSaleReport.aspx",
+                    "menus": [
+                    ]
+                },
+                {
+                    "menuName": "店铺结算报表",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/StoreAccountReport.aspx",
+                    "menus": [
+                    ]
+                },
+                {
+                    "menuName": "POS支付分析查询表",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/PosPayAnalyzeReport.aspx",
+                    "menus": [
+                    ]
+                },
+                {
+                    "menuName": "零售折扣统计",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/RetailDiscountTotalReport.aspx",
+                    "menus": [
+                    ]
+                },
+                {
+                    "menuName": "门店销售报表",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/StoreSaleRateReport.aspx",
+                    "menus": [
+                    ]
+                },
+                {
+                    "menuName": "门店商品销售报表",
+                    "cls": "",
+                    "code": "mainDoc-yys",
+                    "url": "http://10.0.17.16:8088/Webs/RetailMonthTotalReport.aspx",
+                    "menus": [
+                    ]
+                }
+            ]
+        }
+    ],
+    "message": "",
+    "total": 10
+}

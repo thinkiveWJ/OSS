@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<style type="text/css">
+.history-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	indexLookInfo=true,//作为判断历史记录是否首次进入的标志true首次进入
+	listUrl = "../../../revolvingAmt/queryRevolvingAmtList.do",
+	queryPosMoney="../../../revolvingAmt/queryRevolvingAmtListByStoreId.do",
+// 	queryByStoreName="../../../revolvingAmt/queryRevolvingAmtListByStoreName.do",
+	updatePosMoney="../../../revolvingAmt/businessUpdateRevolvingAmt.do",
+	queryArea="../../../org/findAllTheRegion.do",
+	queryCity="../../../org/findCityListByRegionId.do",
+	queryCityArea="../../../org/findDistrictListByCityId.do",
+	queryStore="../../../org/findStoreListByDistrictId.do",
+	queryHistory="../../../revolvingAmt/queryRevolvingAmtHistory.do",
+	saveAddMoney="../../../revolvingAmt/saveRevolvingAmtBeanBatch.do",
+	queryAllStoreUrl="../../../org/findStoreList.do",
+	queryStoreByArea="../../../org/findStoreListByRegionId.do",
+	queryStoreByCity="../../../org/findStoreListByCityId.do",
+	queryStoreByCityArea="../../../org/findStoreListByDistrictId.do";
+	
+	$(function() {
+		_initButtons({
+			historyBackBTN:function(){
+				hideSlidePanel('.history-panel',function(){
+					listId = "#list2";
+					resizeFun();
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl}).hideCol("somecol").trigger("reloadGrid"); 
+				});
+			},
+			fastSearch:function(){
+				var postData={regionId:"",storeId:"",districtId:"",cityId:"",storeName:$("#fastQueryText").val()};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch: searchFunc,
+			insertBTN:function(){
+				//新增备用金处理
+				showSlidePanel(".page-editor-panel",insertMoney)
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,align:"center",hidden : true},
+			     			{name : 'regionName',align:"center",autoWidth : true}, 
+			     			{name : 'cityName',autoWidth : true,align:"center"},
+			     			{name : 'district',autoWidth : true,align:"center"},
+			     			{name : 'storeName',align:"center",autoWidth : true}, 
+			     			{name : 'machineName',autoWidth : true,align : "center"},
+			     			{name : 'count',align:"center",autoWidth : true},
+			     			{name : 'modifyDate',align:"center",autoWidth : true}, 
+			     			{name : 'totalRevolvingAmt',align:"center",autoWidth : true
+			     			}, 
+			     			{name : '',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="updateMoneyTab(\''+arg3.storeId+'\')">修改备用金</button>';
+			     			}},
+			     			{name : '',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+ 			     				return '<button class="wj-jqgrid-button" onclick="lookInfoTab(\''+arg3.storeId+'\')">查看信息</button>';
+			     			}},
+			     			], 
+			     			_colNames = [' ', '区域', '城市','城区' ,'门店','POS编号','POS数','最后一次修改日期','门店备用金','操作','历史记录'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		//初始化区域
+		initAreaSearch();
+	});
+	/***根据条件查询**/
+	function searchFunc(){
+		var storeSearch=$("#storeSearch").data("chosen").selectedItem();
+		var storeSearchVal=storeSearch?storeSearch["value"]:"";
+		var cityAreaSearch=$("#cityAreaSearch").data("chosen").selectedItem();
+		var cityAreaSearchVal=cityAreaSearch?cityAreaSearch["value"]:"";
+		var citySearch=$("#citySearch").data("chosen").selectedItem();
+		var citySearchVal=citySearch?citySearch["value"]:"";
+		var areaSearch=$("#areaSearch").data("chosen").selectedItem();
+		var areaSearchVal=areaSearch?areaSearch["value"]:"";
+		if(storeSearchVal!=""){
+			var postData={storeId:storeSearchVal,regionId:"",cityId:"",districtId:""};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+		}else if(cityAreaSearchVal!=""){
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{districtId:cityAreaSearchVal,regionId:"",cityId:"",storeId:"",storeName:""}}).hideCol("somecol").trigger("reloadGrid"); 
+		}else if(citySearchVal!=""){
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{cityId:citySearchVal,regionId:"",storeId:"",districtId:"",storeName:""}}).hideCol("somecol").trigger("reloadGrid"); 
+		}else if(areaSearchVal!=""){
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{regionId:areaSearchVal,storeId:"",districtId:"",cityId:"",storeName:""}}).hideCol("somecol").trigger("reloadGrid"); 
+		}else{
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{regionId:"",cityId:"",districtId:"",storeId:"",storeName:""}}).hideCol("somecol").trigger("reloadGrid"); 
+		}
+	}
+	/***********初始化区域********/
+	function initAreaSearch(){
+		POST(queryArea,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows;
+			var str="";areaName="",areaId="";
+			for(var i in result){
+				areaName=result[i].regionName;
+				areaId=result[i].regionId;
+				result[i]={text:areaName,value:areaId};
+			}
+			result.unshift({text:"请选择区域",value:""});
+			$("#areaSearch").data("chosen")._clearOptions();
+			$("#areaSearch").data("chosen")._addOptions(result);
+			$("#areaSearch").unbind("change").bind("change",function(){
+				var regionId=$("#areaSearch").data("chosen").selectedItem();
+				if(regionId){
+					regionId=regionId["value"];
+					$("#citySearch").data("chosen")._enabled();
+					$("#cityAreaSearch").data("chosen")._disabled();
+					$("#cityAreaSearch").data("chosen")._clearOptions();
+					$("#storeSearch").data("chosen")._disabled();
+					$("#storeSearch").data("chosen")._clearOptions();
+				}else{
+					$("#citySearch").data("chosen")._disabled();
+					$("#citySearch").data("chosen")._clearOptions
+					$("#cityAreaSearch").data("chosen")._disabled();
+					$("#cityAreaSearch").data("chosen")._clearOptions();
+					$("#storeSearch").data("chosen")._disabled();
+					$("#storeSearch").data("chosen")._clearOptions();
+					return;
+				}
+				POST(queryCity,JSON.stringify({regionId:regionId}),function(result){
+					if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+						window.message({title:"提示信息",text: result.rspMsg});
+						return;
+					}
+					initCity(result);
+				});
+			});
+		});
+	}
+	/*****根据区域id选择城市****/
+	function initCity(result){
+		var result=result.rows;
+		var str="";cityName="",cityId="";
+		for(var i in result){
+			cityName=result[i].cityName;
+			cityId=result[i].cityId;
+			result[i]={text:cityName,value:cityId};
+		}
+		result.unshift({text:"请选择城市",value:""});
+		$("#citySearch").data("chosen")._clearOptions();
+		$("#citySearch").data("chosen")._addOptions(result);
+		$("#citySearch").unbind("change").bind("change",function(){
+			var cityId=$("#citySearch").data("chosen").selectedItem();
+			if(cityId){
+				cityId=cityId["value"];
+				$("#cityAreaSearch").data("chosen")._enabled();
+				$("#storeSearch").data("chosen")._disabled();
+				$("#storeSearch").data("chosen")._clearOptions();
+			}else{
+				$("#cityAreaSearch").data("chosen")._disabled();
+				$("#cityAreaSearch").data("chosen")._clearOptions();
+				$("#storeSearch").data("chosen")._disabled();
+				$("#storeSearch").data("chosen")._clearOptions();
+				return;
+			}
+			POST(queryCityArea,JSON.stringify({cityId:cityId}),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				initCityArea(result);
+			});
+		});
+	}
+	/*****根据城市id查询城区******/
+	function initCityArea(result){
+		var result=result.rows;
+		var str="";districtName="",districtId="";
+		for(var i in result){
+			districtName=result[i].districtName;
+			districtId=result[i].districtId;
+			result[i]={text:districtName,value:districtId};
+		}
+		result.unshift({text:"请选择城区",value:""});
+		$("#cityAreaSearch").data("chosen")._clearOptions();
+		$("#cityAreaSearch").data("chosen")._addOptions(result);
+		$("#cityAreaSearch").unbind("change").bind("change",function(){
+			var districtId=$("#cityAreaSearch").data("chosen").selectedItem();
+			if(districtId){
+				districtId=districtId["value"];
+				$("#storeSearch").data("chosen")._enabled();
+			}else{
+				$("#storeSearch").data("chosen")._disabled();
+				$("#storeSearch").data("chosen")._clearOptions();
+				return;
+			}
+			POST(queryStore,JSON.stringify({districtId:districtId}),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				initStore(result);
+			});
+		});
+	}
+	/******根据城区查询门店******/
+	function initStore(result){
+		var result=result.rows;
+		var str="";storeName="",storeId="";
+		for(var i in result){
+			storeName=result[i].storeName;
+			storeId=result[i].storeId;
+			result[i]={text:storeName,value:storeId};
+		}
+		result.unshift({text:"请选择城区",value:""});
+		$("#storeSearch").data("chosen")._clearOptions();
+		$("#storeSearch").data("chosen")._addOptions(result);
+	}
+	/*****修改备用金********/
+	function updateMoneyTab(storeID){
+		showSlidePanel('.modify-money-panel');
+		//查询pos编号以及原备用金额的回调函数
+		POST(queryPosMoney,JSON.stringify({storeId:storeID}),queryPosMoneyCallback);
+		//取消
+		$("#modifyCancelBTN").unbind('click').bind('click',function(){
+			hideSlidePanel('.modify-money-panel');
+		});
+		//保存----待完成
+	}
+	/*********查询pos编号以及原备用金额的回调函数*********/
+	function queryPosMoneyCallback(result){
+		if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			window.message({title:"提示信息",text: result.rspMsg});
+			return;
+		}
+		var result=result.rows;
+		//填充pos备用金说句
+		fillPosData(result);
+	}
+	/*****填充修改pos备用金数据*******/
+	function fillPosData(result){
+		var str="",data="";
+		for(var i=0;i<result.length;i++){
+			data=result[i];
+			var revolvingAmt=data.revolvingAmt
+			if(!revolvingAmt){
+				revolvingAmt=0;
+			}
+			str+='<div class="modify-money-content"><h4>'+data.posName+'</h4><div class="modify-money-content-row"><div class="name left">原备用金金额：</div>'+
+			'<div class="val left">'+revolvingAmt+'</div><div class="clearfix"></div></div><div class="modify-money-content-row">'+
+			'<div class="name left">修改为备用金金额：</div><div class="val left"><input name="revolvingAmt" type="text" value="'+revolvingAmt+'"/></div><div class="clearfix"></div></div></div>';
+		}
+		$("#updatePosMoney").html(str);
+		//点击保存按钮
+		var modifyFlag="";
+		$("#modifySaveBTN").unbind('click').bind('click',function(){
+			var reqList=[],jsonData={};
+			for(var j=0;j<result.length;j++){
+				var revolvingAmtId=result[j].revolvingAmtId;
+				var revolvingAmt=$("#updatePosMoney .modify-money-content:eq("+j+") input[name='revolvingAmt']").val();
+				var reg=/^([0]{1}|([1-9]{1}[0-9]{0,11}))(\.[0-9]{1,2})?$/;
+				if(!reg.test(revolvingAmt)){
+					window.message({
+						text : "请输入有效的备用金金额!",
+						title : "提示"
+					});
+					modifyFlag=false;
+					break;
+				}
+				modifyFlag=true;
+				jsonData={revolvingAmtId:revolvingAmtId,revolvingAmt:revolvingAmt}
+				reqList.push(jsonData);
+			}
+			if(modifyFlag==true){
+				var modifyUserId =sessionStorage.getItem("modifyUserId");
+				POST(updatePosMoney,JSON.stringify({reqList:reqList,modifyUserId:modifyUserId}),function(result){//modifyUserId当前操作用户ID假值，需要修改
+					if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+						window.message({title:"提示信息",text: result.rspMsg});
+						return;
+					}
+					hideSlidePanel('.modify-money-panel',function(){
+						$(listId).trigger("reloadGrid");
+					});
+				});
+			}
+		});
+	}
+	/*******查看历史记录********/
+	function lookInfoTab(StoreId){
+		showSlidePanel(".history-panel",function(){
+			  initHistoryGrid(StoreId);
+			  var $hpanel=$(".history-panel .page-content"),$tx=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv"),$tx2=$hpanel.find(".ui-jqgrid-pager"),w=$hpanel.width(),h=$hpanel.height()-12-30-$tx.height()-$tx2.height();
+        	  $tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+		});
+		//填充历史数据
+	}
+	function initHistoryGrid(StoreId){
+		listId="#historyContentList";
+		pagerId="#pagerHistory";
+		if(indexLookInfo!=true){
+			window.$tlist=$(listId).jqGrid("setGridParam", {page:1,url:queryHistory,postData:{storeId:StoreId}}).hideCol("somecol").trigger("reloadGrid");
+			return;
+		}
+		indexLookInfo=false;
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'posName',width : 250,align:"center",}, 
+			     			{name : 'ModifyDate',width : 200,align:"center"},
+			     			{name : '',autoWidth : true,align:"center",
+			     				formatter:function(arg1,arg2,arg3){
+				     				return (arg3.oldRevolvingAmt?arg3.oldRevolvingAmt:0);
+				     				}	
+			     			}, 
+			     			{name : 'revolvingAmt',width : 100,align : "center"},
+			     			{name : '',align:"center",width : 60,formatter:function(arg1,arg2,arg3){
+			     				var str="";
+			     				var value=arg3.revolvingAmt-(arg3.oldRevolvingAmt?arg3.oldRevolvingAmt:0);
+			     				if(value<0){
+			     					str+='<div style="color:#dd7572">'+value+'</div>'
+			     				}else{
+			     					str+='<div style="color:#00a06a">'+value+'</div>'
+			     				}
+			     				return str;
+			     				}
+			     			},
+			     			{name:"storeName",hidden:true,formatter:function(arg1,arg2,arg3){
+			     					$(".history-content-title").html(arg3.storeName);
+			     					return;
+			     				}
+			     			}
+			     			];
+			     			_colNames = [' ','pos编号', '创建时间', '原备用金金额', '现备用金金额', '调整幅度','门店'];
+	   window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url:queryHistory,postData:{storeId:StoreId},colNames : _colNames,colModel : _colModel,pager:pagerId}));
+	}
+	/***新增别用金**查询所有门店*******/
+	function insertMoney(){
+		$("table.page-add-content tr:eq(0)").nextAll().remove();
+		POST(queryAllStoreUrl,JSON.stringify({}),storeCallBack)
+	}
+	/***回调函数*****/
+	function storeCallBack(result){
+		if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			window.message({title:"提示信息",text: result.rspMsg});
+			return;
+		}
+		var result=result.rows;
+		var str="",storeName="",storeId="";
+		for(var i in result){
+			storeName=result[i].storeName;
+			storeId=result[i].storeId
+			result[i]={text:storeName,value:storeId};
+		}
+		result.unshift({text:"请选择门店",value:""});
+		$("#store").data("chosen")._clearOptions();
+		$("#store").data("chosen")._addOptions(result);
+		$("#store").unbind("change").bind("change",function(){
+			var storeId=$("#store").data("chosen").selectedItem();
+			storeId=storeId?storeId["value"]:"";
+			$("table.page-add-content tr:eq(0)").nextAll().remove(".remove-flag");
+			POST(queryPosMoney,JSON.stringify({storeId:storeId}),posCallBack);
+		});
+	}
+	/***查询有几台pos机****/
+	function posCallBack(result){
+		if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			window.message({title:"提示信息",text: result.rspMsg});
+			return;
+		}
+		var result=result.rows,str="";
+		for(var i in result){
+			str+='<tr class="remove-flag"><td>'+result[i].posName+' 备用金额：</td>';
+			if(result[i]["revolvingAmt"]||result[i]["revolvingAmt"]==0){
+				str+='<td class="add-content-left"><input id="'+result[i].posId+'" value="'+result[i].revolvingAmt+'" disabled  name="moneyInput" type="text"/></td></tr>';
+			}else{
+				str+='<td class="add-content-left"><input id="'+result[i].posId+'"  name="moneyInput" type="text"/></td></tr>';
+			}
+
+		}
+		$("table.page-add-content").append(str);
+		if(result.length>0){
+			$("#addSaveMoney").show();
+			//点击保存
+			var reg=/^([0]{1}|([1-9]{1}[0-9]{0,11}))(\.[0-9]{1,2})?$/;
+			$("#addSaveMoney").unbind('click').bind('click',function(){
+				var trLength=$("table.page-add-content tr").length;
+				var moneyInput="",flag="false",reqList=[],posId="";
+				for(var i=1;i<trLength;i++){
+					if($("table.page-add-content tr:eq("+i+") td input").attr("disabled")!="disabled"){
+						moneyInput=$("table.page-add-content tr:eq("+i+") td input").val();
+						moneyInput=moneyInput.replace(/\s/g, "");
+						if(moneyInput==""){
+							flag=false;
+							window.message({
+		 						text : "请输入有效的备用金金额!",
+		 						title : "提示信息"
+		 					});
+							break;
+						}
+						moneyInput=Number(moneyInput+"");
+						posId=$("table.page-add-content tr:eq("+i+") td input").attr("id");
+						reqList.push({posId:posId,revolvingAmt:moneyInput});
+						if(!reg.test(moneyInput)){
+							flag=false;
+							window.message({
+		 						text : "请输入有效的备用金金额或门店备用金已存在!",
+		 						title : "提示信息"
+		 					});
+							break;
+						}
+						flag=true;
+					}
+				}
+				if(flag==true){
+					var modifyUserId=sessionStorage.getItem("modifyUserId");
+					POST(saveAddMoney,JSON.stringify({reqList:reqList,modifyUserId:modifyUserId,storeId:result[0].storeId}),function(result){
+						if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+							window.message({title:"提示信息",text: result.rspMsg});
+							return;
+						}
+						hideSlidePanel('.page-editor-panel',function(){
+							$(listId).trigger("reloadGrid",[{page:1}]);
+						});
+					});
+				}
+			});
+		}
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var postData={regionId:"",storeId:"",districtId:"",cityId:"",storeName:$("#fastQueryText").val()};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm">
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">区域：
+									<select data-xtype="chosen" id="areaSearch" style="width:208px;">
+									</select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">城市：
+									<select data-xtype="chosen" id="citySearch" style="width:208px;" disabled>
+									</select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">城区：
+									<select data-xtype="chosen" id="cityAreaSearch" style="width:208px;" disabled>
+									</select>
+								</td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">门店：
+									<select data-xtype="chosen" id="storeSearch" style="width:208px;" disabled>
+									</select>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0"
+					border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i
+							class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="insertBTN"><i class="fa fa-plus"></i>新增备用金</button></td>
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="fastQueryText" xdata-type="text" placeholder="可以输入门店查询" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data">备用金信息</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- 修改备用金 -->
+	<div class="modify-money-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i>修改备用金</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="modifySaveBTN"><i class="fa fa-check"></i>保存</button>
+					<button id="modifyCancelBTN"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content" id="updatePosMoney" style="padding:0px;">
+<!-- 				<div class="modify-money-content"> -->
+<!-- 					<h4>POSA</h4> -->
+<!-- 					<div class="modify-money-content-row"> -->
+<!-- 						<div class="name left">原备用金金额：</div> -->
+<!-- 						<div class="val left">10000</div> -->
+<!-- 						<div class="clearfix"></div> -->
+<!-- 					</div> -->
+<!-- 					<div class="modify-money-content-row"> -->
+<!-- 						<div class="name left">修改为备用金金额：</div> -->
+<!-- 						<div class="val left"><input type="text"/></div> -->
+<!-- 						<div class="clearfix"></div> -->
+<!-- 					</div> -->
+<!-- 				</div> -->
+			</div>
+		</div>
+	</div>
+	<!-- 新增模板 -->
+	<div class="page-editor-panel full-drop-panel">
+		<!-- 新增模板头部 -->
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button style="display:none;" id="addSaveMoney"><i class="fa fa-check"></i>保存</button>
+					<button id="cancelBTN"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<!-- 新增模板具体内容 -->
+		<div class="page-content">
+			<div class="page-inner-content">
+				<table class="page-add-content">
+					<tr>
+						<td>门店：</td>
+						<td class="add-content-left">
+							<select data-xtype="chosen" style="width:170px;" id="store" ></select>
+						</td>
+					</tr>
+<!-- 					<tr> -->
+<!-- 						<td>城市：</td> -->
+<!-- 						<td class="add-content-left"> -->
+<!-- 							<select data-xtype="chosen" style="width:170px;" name="city"></select> -->
+<!-- 						</td> -->
+<!-- 					</tr> -->
+<!-- 					<tr> -->
+<!-- 						<td>城区：</td> -->
+<!-- 						<td class="add-content-left"> -->
+<!-- 							<select data-xtype="chosen" style="width:170px;" name="cityArea"></select> -->
+<!-- 						</td> -->
+<!-- 					</tr> -->
+<!-- 					<tr> -->
+<!-- 						<td>门店：</td> -->
+<!-- 						<td class="add-content-left"> -->
+<!-- 							<select data-xtype="chosen" style="width:170px;" name="store"></select> -->
+<!-- 						</td> -->
+<!-- 					</tr> -->
+<!-- 					<tr> -->
+<!-- 						<td>备用金额：</td> -->
+<!-- 						<td class="add-content-left"><input type="text"/></td> -->
+<!-- 					</tr> -->
+				</table>
+			</div>
+		</div>
+	</div>
+	<!-- 历史记录面板 -->
+	<div class="history-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i>历史记录</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+						<button id="historyBackBTN"><i class="fa fa-hand-o-left"></i>返回</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content" style="padding:0px;">
+				<div class="history-content-title split"></div>
+				<table id="historyContentList"></table>
+				<div id="pagerHistory"></div>
+		    </div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../../theme/default/ui.pick.css" rel="stylesheet" />
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/page.area.city.store.js"></script>
+<script type="text/javascript" src="../../../js/ui.pick.js"></script>
+<style type="text/css">
+.history-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	queryArea="../../../org/findAllTheRegion.do",
+	queryCity="../../../org/findCityListByRegionId.do",
+	queryCityArea="../../../org/findDistrictListByCityId.do",
+	queryStore="../../../org/findStoreListByDistrictId.do",
+	loadUrl = "../../../store/findStorePosTemplateList.do",
+	downloadUrl="../../../file/loadDefaultPosPrintTemplate.do",
+	saveUploadUrl="../../../posMachineInfo/updateStorePosTemplateBatch.do";
+	
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				$(listId).jqGrid("setGridParam", {page:1,url : loadUrl,page:1,postData:{storeName:$("#fastQueryText").val(),districtId:"",regionId:"",cityId:"",storeId:""}}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			ticketMachineBTN:function(){
+				showSlidePanel(".page-editor-panel");
+			},
+			tempDownload:function(){
+				$("#tempDownloadForm").submit();
+			},
+			advancedSearch:function(){
+				var storeSearch=$("#storeSearch").data("chosen").selectedItem();
+				var storeSearchVal=storeSearch?storeSearch["value"]:"";
+				var cityAreaSearch=$("#cityAreaSearch").data("chosen").selectedItem();
+				var cityAreaSearchVal=cityAreaSearch?cityAreaSearch["value"]:"";
+				var citySearch=$("#citySearch").data("chosen").selectedItem();
+				var citySearchVal=citySearch?citySearch["value"]:"";
+				var areaSearch=$("#areaSearch").data("chosen").selectedItem();
+				var areaSearchVal=areaSearch?areaSearch["value"]:"";
+				if(storeSearchVal!=""){
+					var postData={storeId:storeSearchVal,regionId:areaSearchVal,cityId:citySearchVal,districtId:cityAreaSearchVal};
+					$(listId).jqGrid("setGridParam", {page:1,url : loadUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+				}else if(cityAreaSearchVal!=""){
+					$(listId).jqGrid("setGridParam", {page:1,url : loadUrl,postData:{districtId:cityAreaSearchVal,regionId:areaSearchVal,cityId:citySearchVal,storeId:""}}).hideCol("somecol").trigger("reloadGrid"); 
+				}else if(citySearchVal!=""){
+					$(listId).jqGrid("setGridParam", {page:1,url : loadUrl,postData:{regionId:areaSearchVal,cityId:citySearchVal,regionId:"",storeId:"",districtId:""}}).hideCol("somecol").trigger("reloadGrid"); 
+				}else if(areaSearchVal!=""){
+					$(listId).jqGrid("setGridParam", {page:1,url : loadUrl,postData:{regionId:areaSearchVal,storeId:"",districtId:"",cityId:""}}).hideCol("somecol").trigger("reloadGrid"); 
+				}else{
+					$(listId).jqGrid("setGridParam", {page:1,url : loadUrl,postData:{regionId:"",cityId:"",districtId:"",storeId:""}}).hideCol("somecol").trigger("reloadGrid"); 
+				}
+			},
+			saveBTN:function(){
+				$("#uploadSomePanel").submit();
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'regionName',width : 150,align:"center"}, 
+			     			{name : 'cityName',width : 200,align:"center"},
+			     			{name : 'districtName',autoWidth : true,align:"center"}, 
+			     			{name : 'storeName',width : 150,align : "center"},
+			     			{name : 'templateName',width : 150,align : "center"},
+			     			{name : '',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="upload(\''+arg3.storeId+'\')">上传</button>';
+			     			}},
+			     			{name : 'templateModifyDate',width : 150,align:"center"}, 
+			     			], 
+
+			     			_colNames = [' ','区域', '城市', '城区', '门店名称', '小票机模板','操作','最新下派时间'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url:loadUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		initAreaSearch(queryArea,queryCity,queryCityArea,queryStore);
+		$("#uploadInpFile").change(function(){
+			var videoUrl=$(this)[0].value;
+			$("#uploadInpFileName").val(videoUrl.substring(videoUrl.lastIndexOf("\\")+1));
+		});
+		$("#uploadSomeFile").change(function(){
+			var videoUrl=$(this)[0].value;
+			$("#uploadSomeFileName").val(videoUrl.substring(videoUrl.lastIndexOf("\\")+1));
+		});
+	});
+	/******单个上传的form submit的回调*****/
+	function saveReport() {   
+	    // jquery 表单提交   
+	    $("#uploadOneForm").ajaxSubmit(function(message) {   
+		    // 对于表单提交成功后处理，message为提交页面saveReport.htm的返回内容   
+		    var storeIds=$("body").data("storeId");
+	        POST(saveUploadUrl,JSON.stringify({storeIds:storeIds}),function(result){
+	        	if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+	    			window.message({title:"提示信息",text: result.rspMsg});
+	    			return;
+	    		}
+	        	$(listId).trigger("reloadGrid");
+	        });  
+	          
+	    });   
+	    return false; // 必须返回false，否则表单会自己再做一次提交操作，并且页面跳转   
+	}
+	/******单个上传的额弹出框*******/
+	function upload(storeId){
+		$("body").data("storeId",storeId);
+		$('#uploadOne').dialog({
+			width:350,
+			buttons:[
+				         {
+				        	 text:"确定",
+				        	 click:function(){
+				        		 $("#uploadOneForm").submit();
+				        		 $("#uploadOne").dialog("close");
+				        	 }
+				         },
+				         {
+				        	 text:"取消",
+				        	 click:function(){
+				        		 $(this).dialog("close");
+				        	 } 
+				         }
+			         ]
+		});
+	}
+	/*********批量上传form submit的回调函数************/
+	function uploadSomeReports(){
+		$("#uploadSomePanel").ajaxSubmit(function(message) {   
+		    // 对于表单提交成功后处理，message为提交页面saveReport.htm的返回内容   
+// 		    var idsArr=$(".text-panel").attr("idVal").split(",");
+			var idsArr=$("#treeInputVal").val();
+			if(idsArr==''||idsArr==null){
+				idsArr=[];
+			}else{
+				idsArr=idsArr.split(",");
+			}
+			var regionIds="",cityIds="",districtIds="",storeIds="";
+			for(var i=0;i<idsArr.length;i++){
+				if(idsArr[i].indexOf("storeId")>-1){
+					storeIds+=idsArr[i].split("_")[0]+",";
+				}else if(idsArr[i].indexOf("districtId")>-1){
+					districtIds+=idsArr[i].split("_")[0]+",";
+				}else if(idsArr[i].indexOf("cityId")>-1){
+					cityIds+=idsArr[i].split("_")[0]+",";
+				}else if(idsArr[i].indexOf("regionId")>-1){
+					regionIds+=idsArr[i].split("_")[0]+",";
+				}
+			}
+			if(regionIds){
+				regionIds=regionIds.substring(0,regionIds.length-1);
+			}
+			if(cityIds){
+				cityIds=cityIds.substring(0,cityIds.length-1);
+			}
+			if(districtIds){
+				districtIds=districtIds.substring(0,districtIds.length-1);
+			}
+			if(storeIds){
+				storeIds=storeIds.substring(0,storeIds.length-1);
+			}
+		    POST(saveUploadUrl,JSON.stringify({storeIds:storeIds,districtIds:districtIds,cityIds:cityIds,regionIds:regionIds}),function(result){
+			    	if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+		    			window.message({title:"提示信息",text: result.rspMsg});
+		    			return;
+		    		}
+					hideSlidePanel(".page-editor-panel",function(){
+						$(listId).trigger("reloadGrid");
+					});
+			});
+	    });   
+	    return false; // 必须返回false，否则表单会自己再做一次提交操作，并且页面跳转   
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        $(listId).jqGrid("setGridParam", {page:1,url : loadUrl,postData:{storeName:$("#fastQueryText").val(),districtId:"",regionId:"",cityId:"",storeId:""}}).hideCol("somecol").trigger("reloadGrid");
+	    }
+	}
+	
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm">
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">区域：
+									<select data-xtype="chosen" id="areaSearch" style="width:208px;">
+									</select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">城市：
+									<select data-xtype="chosen" id="citySearch" style="width:208px;" disabled>
+									</select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">城区：
+									<select data-xtype="chosen" id="cityAreaSearch" style="width:208px;" disabled>
+									</select>
+								</td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">门店：
+									<select data-xtype="chosen" id="storeSearch" style="width:208px;" disabled>
+									</select>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="tempDownload">原始模板下载</button></td>
+						<form action="../../../file/loadDefaultPosPrintTemplate.do" id="tempDownloadForm" method="post"></form>
+						<td class="buttons"><button id="ticketMachineBTN">批量上传</button></td>
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="fastQueryText" xdata-type="text" placeholder="输入门店名称查询" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+			<div id="uploadOne" style="width:300px;height:50px;margin:24px auto;display:none;position:relative;">
+				<form action="../../../file/posPrintUpload.do" id="uploadOneForm" method="post" enctype="multipart/form-data;"  onsubmit="return saveReport()">
+				上传：
+					<input id="uploadInpFile" type="file" name="posPrintFiles" style="width:270px;position:absolute;top:-2px;left:0;cursor:pointer;opacity:0;filter:Alpha(opacity=0);"/>
+					<input id="uploadInpFileName" type="text" style="display:inline-block;width:200px;" readonly/>
+				</form>
+			</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	
+	<!-- 编辑 -->
+	<div class="page-editor-panel full-drop-panel">
+	<!-- 编辑模板头部step1 -->
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="saveBTN"><i class="fa fa-check"></i>保存</button>
+					<button id="cancelBTN"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<!-- 编辑模板具体内容step1 -->
+		<div class="page-content step1">
+			<div class="second-screen-content">
+				<form id="uploadSomePanel" action="../../../file/posPrintUpload.do" method="post" enctype="multipart/form-data;"  onsubmit="return uploadSomeReports();">
+				<table class="second-screen-content-table">
+					<tr><td class="content-right">有效范围：</td>
+						<td id="leftTreePage">
+							<input data-url="./pages/storeManagement/smallTicketMachine/leftTree.html" data-xtype="pick"  data-dialogWidth="600" data-dialogHeight="600" style="width:300px;" >
+						</td>
+					</tr>
+					<input type="hidden" name="filename" value="defalut.jpg"/>
+					<tr><td class="content-right" style="position:relative;">上传：<input id="uploadSomeFile" name="posPrintFiles" type="file" style="width:370px;position:absolute;top:0;left:0;cursor:pointer;opacity: 0;filter:Alpha(opacity=0);"/></td>
+					<td><input id="uploadSomeFileName" type="text" style="display:inline-block;;width:300px;" readonly/></td></tr>
+				</table>
+				</form>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

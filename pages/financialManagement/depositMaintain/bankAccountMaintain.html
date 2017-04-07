@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link rel="stylesheet" href="../../../theme/default/page.bankDeposit.css"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<style type="text/css">
+.page-look-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.page-content .select{padding-left:24px;height:60px;line-height:60px;}
+table.single-table{width:100%;margin-top:24px;border:solid #ccc; border-width:1px 0px 0px 1px;text-align:center;}
+table.single-table td{border:solid #ccc; border-width:0px 1px 1px 0px;line-height:30px;}
+table.single-table td.ensure input{padding:0;height:20px;line-height:20px;text-indent:3px;margin-right:5px;}
+table.single-table td.ensure a{display:inline-block;width:60px;height:24px;line-height:24px;background:#01a06a;color:#fff;text-align:center;}
+table.single-table td.ensure a:hover{background:#018659;}
+table.single-table td.send a,table.single-table td.chonse-store a{display:inline-block;padding:0 12px;background:#01a06a;color:#fff;height:24px;line-height:24px;text-align:center;}
+table.single-table td.send a:hover,table.single-table td.chonse-store a:hover{background:#018659;}
+.page-editor-panel{position:relative;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	indexLookInfo=true,//作为判断历史记录是否首次进入的标志true首次进入
+	listUrl = "../../../bankAccount/findBankAccountList.do",
+	queryOpenBankListUrl="../../../bankAccount/findBankCodeList.do",
+	addAccountUrl="../../../bankAccount/addBankAccount.do",
+	deleteBankAccountUrl="../../../bankAccount/deleteBankAccount.do",
+	updateUrl="../../../bankAccount/updateBankAccount.do",
+	queryAccountInfoUrl="../../../bankAccount/loadBankAccountByBankAccountId.do",
+	updateUrl="../../../bankAccount/updateBankAccount.do",
+	queryOpenBankByBankAccountUrl="../../../bankAccount/findBankCodeBySubAccount.do",
+	queryDetailsUrl="../../../bankAccount/findStoreListByBankAccountBound.do",
+	relieveUrl="../../../bankAccount/unbindBankAccountOffStore.do",
+	updateDateUrl="../../../bankAccount/updateStartDate.do";
+
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				var bankAccountName=$("#fastQueryText").val();
+				var postData={bankAccountName:bankAccountName,bankCode:"",bankAccount:"",createDateBegin:"",createDateEnd:""};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch:function(){
+				var postData={};
+				var bankAccountName=$("#openBankAccountSearch").val();
+				var bankCode=$("#openBankSearch").data("chosen").selectedItem();
+				bankCode=bankCode?bankCode["value"]:"";
+				var bankAccount=$("#bankAccountSearch").val();
+				var createDateBegin=$("#startDateSearch").val();
+				var createDateEnd=$("#endDateSearch").val();
+				postData={bankAccountName:bankAccountName,bankCode:bankCode,bankAccount:bankAccount,createDateBegin:createDateBegin,createDateEnd:createDateEnd};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			exportForm:function(){
+				var bankCode=$("#openBankSearch").data("chosen").selectedItem();
+				bankCode=bankCode?bankCode["value"]:"";
+				$("#bankCodeForm").val(bankCode);
+				$("#searchForm").submit();
+			},
+			insertBTN:function(){
+				$("#addAccountName").val("");
+				$("#addBankAccount").val("");
+				$("#addOpenBank").val("");
+				$("#addOpenBranch").val("");
+				showSlidePanel(".page-add-panel",function(){
+					addAccountFunc();
+				});
+			},
+			addBackBTN:function(){
+				hideSlidePanel(".page-add-panel");
+			},
+			lookBackBTN:function(){
+				hideSlidePanel(".page-look-panel",function(){
+					listId = "#list2",pagerId = '#pager2';
+					$(listId).trigger("reloadGrid");
+				});
+			},
+			editBackBTN:function(){
+				hideSlidePanel(".page-edit-panel",function(){
+					listId = "#list2",pagerId = '#pager2';
+					$(listId).trigger("reloadGrid");
+				});
+			},
+			editResetBTN:function(){
+				editFunc();
+			},
+			lookSearchBTN:function(){
+				$(listId).jqGrid("setGridParam", {page:1,url:queryDetailsUrl,postData:{storeName:$("#lookStoreNameSearch").val(),bankAccountId:""}}).hideCol("somecol").trigger("reloadGrid"); 
+			}
+			
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : '',key : true,width : 60,hidden : true},
+			     			{name : 'bankAccountName',width : 150,align:"center"}, 
+			     			{name : 'bankAccount',width : 150,align:"center"},
+			     			{name : 'bankName',autoWidth : true,align:"center"}, 
+			     			{name : 'bankBranch',autoWidth : true,align : "center"},
+			     			{name : 'createDate',width : 150,align:"center"},
+			     			{name : '',width : 150,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="lookButton(\''+arg3.bankAccountId+'\')">查看</button>';
+			     			}}, 
+			     			{name:'',width : 150,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="editButton(\''+arg3.bankAccountId+"\',\'"+arg3.bankAccountName+"\',\'"+arg3.bankAccount +'\')">编辑</button>'+
+		     					'<button class="wj-jqgrid-button" onclick="deleteteButton(\''+arg3.bankAccountId+'\')">删除</button>';
+			     			}}
+			     			], 
+			     			_colNames = ['','账户名称', '银行账号', '开户行', '开户支行', '创建时间','查看已绑定门店','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		//搜索条件的创建时间
+		$("#startDateSearch").datepicker({
+		      changeMonth: true,
+		      changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#endDateSearch" ).datepicker( "option", "minDate", selectedDate );
+		      }
+		});
+		$("#endDateSearch").datepicker({
+		      changeMonth: true,
+		      changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#startDateSearch" ).datepicker( "option", "maxDate", selectedDate );
+		      }
+		});
+		//初始化开户行下拉列表
+		initSelectOpenBank();
+		$("#addBankAccount").change(function(){
+			var bankAccount=$(this).val();
+			POST(queryOpenBankByBankAccountUrl,JSON.stringify({bankAccount : bankAccount}),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				var bankName=result["data"]?result["data"]["bankName"]:"";
+				var bankCode=result["data"]?result["data"]["bankCode"]:"";
+				$("#addOpenBank").val(bankName);
+				$("#addOpenBankInput").val(bankCode);
+			});
+		});
+		
+	});
+	/********初始化开户行下拉列表***/
+	function initSelectOpenBank(){
+		POST(queryOpenBankListUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows;
+			for(var i in result){
+				result[i]={text:result[i].bankName,value:result[i].bankCode};
+			}
+			result.unshift({text:"",value:""});
+			$("#openBankSearch").data("chosen")._clearOptions();
+			$("#openBankSearch").data("chosen")._addOptions(result);
+		});
+	}
+	/******添加账户*******/
+	function addAccountFunc(){
+		$("#addSaveBTN").unbind("click").bind("click",function(){
+			var dataArr={};
+			var bankAccountName=$("#addAccountName").val();
+			var bankAccount=$("#addBankAccount").val();
+			if(bankAccount==""||bankAccountName==""){
+				window.message({
+					text:"请输入有效的银行账号!",
+					title:"提示信息"
+				});
+				return;
+			}
+			var bankCode=$("#addOpenBankInput").val();
+			var bankBranch=$("#addOpenBranch").val();
+			dataArr={bankAccountName: bankAccountName,bankAccount:bankAccount,bankCode:bankCode,bankBranch:bankBranch};
+			POST(listUrl,JSON.stringify({}),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				var result=result.rows;
+				var bankAccountNameArr=[],bankAccountArr=[];
+				for(var i in result){
+					bankAccountNameArr.push(result[i].bankAccountName);
+					bankAccountArr.push(result[i].bankAccount);
+				}
+				if(jQuery.inArray(bankAccountName, bankAccountNameArr)>-1){
+					window.message({text:"账户名称已存在",title:"提示信息"});
+					return;
+				}
+				if(jQuery.inArray(bankAccount, bankAccountArr)>-1){
+					window.message({text:"银行账户已存在",title:"提示信息"});
+					return;
+				}
+				POST(addAccountUrl,JSON.stringify(dataArr),function(result){
+					if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+						window.message({title:"提示信息",text: result.rspMsg});
+						return;
+					}
+					hideSlidePanel(".page-add-panel",function(){
+						$(listId).trigger("reloadGrid");
+					});
+				});
+			})
+			
+		});
+	}
+	/****点击查看按钮**/
+	function lookButton(bankAccountId){
+		showSlidePanel(".page-look-panel",function(){
+			lookFunc(bankAccountId);
+			 var $hpanel=$(".page-look-panel .page-content"),$tx=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv"),$tx2=$hpanel.find(".ui-jqgrid-pager"),
+			 w=$hpanel.width(),h=$hpanel.height()-12-36-1-$tx.height()-$tx2.height();
+        	 $tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+		});
+	}
+	/******点击删除按钮***/
+	function deleteteButton(bankAccountId){
+		deleteInfoButton(deleteBankAccountUrl,{bankAccountId:bankAccountId});
+	}
+	/*****点击编辑按钮***/
+	function editButton(bankAccountId,bankAccountName,bankAccount){
+		$("#editResetBTN").data("bankAccountId",bankAccountId);
+		/***填充编辑页面数据**/
+		editFunc(bankAccountName,bankAccount);
+	}
+	/***填充编辑页面数据***/
+	function editFunc(bankAccountName,bankAccount){
+		var bankAccountId=$("#editResetBTN").data("bankAccountId");
+		var bankAccountNameExit=bankAccountName;
+		var bankAccountExit=bankAccount;
+		var deptListFlag={dataFlag:true,findBankNameByCode:{url:queryOpenBankByBankAccountUrl,bankNameId:"#editOpenBank",banCodeId:"#editOpenBankInput"}};
+		showSlidePanel(".page-edit-panel",function(){
+			editInfoButton(queryAccountInfoUrl,{bankAccountId:bankAccountId},"#editFormPanel",deptListFlag);
+			/***点击保存按钮***/
+			$("#editSaveBTN").click(function(){
+				var data=$("#editFormPanel").getFormData();
+				data["bankAccountId"]=bankAccountId;
+				POST(listUrl,JSON.stringify({}),function(result){
+					if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+						window.message({title:"提示信息",text: result.rspMsg});
+						return;
+					}
+					var result=result.rows;
+					var bankAccountNameArr=[],bankAccountArr=[];
+					for(var i in result){
+						bankAccountNameArr.push(result[i].bankAccountName);
+						bankAccountArr.push(result[i].bankAccount);
+					}
+					bankAccountNameArr.splice($.inArray(bankAccountNameExit,bankAccountNameArr),1);
+					bankAccountArr.splice($.inArray(bankAccountExit,bankAccountArr),1);
+					var bankAccountName=$("#editAccountName").val();
+					var bankAccount=$("#editBankAccount").val();
+					if(jQuery.inArray(bankAccountName, bankAccountNameArr)>-1){
+						window.message({text:"账户名称已存在",title:"提示信息"});
+						return;
+					}
+					if(jQuery.inArray(bankAccount, bankAccountArr)>-1){
+						window.message({text:"银行账号已存在",title:"提示信息"});
+						return;
+					}
+					POST(updateUrl,JSON.stringify(data),function(result){
+						if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+							window.message({title:"提示信息",text: result.rspMsg});
+							return;
+						}
+						hideSlidePanel(".page-edit-panel",function(){
+							listId = "#list2",
+							pagerId = '#pager2';
+							$(listId).trigger("reloadGrid");
+						});
+					});
+				});
+			});
+		});
+	}
+	
+	
+	/****查看面板***/
+	function lookFunc(bankAccountId){
+		listId="#lookContentList";
+		pagerId="#pagerLook";
+		if(indexLookInfo!=true){
+			window.$tlist=$(listId).jqGrid("setGridParam", {page:1,url:queryDetailsUrl,postData:{bankAccountId:bankAccountId}}).hideCol("somecol").trigger("reloadGrid");
+			return;
+		}
+		indexLookInfo=false;
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'regionName',width : 150,align:"center"}, 
+			     			{name : 'cityName',width : 150,align:"center"},
+			     			{name : 'districtName',autoWidth : true,align:"center"}, 
+			     			{name : 'storeName',autoWidth : true,align : "center"},
+			     			{name : '',width : 150,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<div style="color:#ff5db0">已绑定</div>';
+			     			}},
+			     			{name : 'startDate',width : 150,align:"center",}, 
+			     			{name:'',width :250,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="relieveButton(\''+arg3.storeBankAccountId+'\')">解除绑定</button>'+
+		     					'<button class="wj-jqgrid-button" onclick="editDateButton(\''+arg3.storeBankAccountId+'\',\''+arg3.startDate+'\')">编辑生效日期</button>';
+			     			}}
+			     			], 
+			     			_colNames = ['','区域', '城市', '城区', '门店', '状态','生效日期','操作'];
+		window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url:queryDetailsUrl,colNames : _colNames,postData:{bankAccountId:bankAccountId},colModel : _colModel,pager : pagerId}));
+	}
+	/*********点击解除绑定********/
+	function relieveButton(storeBankAccountId){
+		window.message({
+			text : "确认要解除绑定的所选择的这家门店吗?",
+			title : "提醒",
+			buttons : {
+				"确认" : function() {
+					window.top.$(this).dialog("close");
+	                POST(relieveUrl,JSON.stringify({storeBankAccountId:storeBankAccountId}),function(data){
+	                	if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+	        				window.message({title:"提示信息",text: result.rspMsg});
+	        				return;
+	        			}
+                		$(listId).trigger("reloadGrid");
+						if(window._delete){
+							window._delete();
+						}
+	                });
+				},
+				"取消" : function() {
+					window.top.$(this).dialog("close");
+				}
+			}
+		});
+	}
+	/***编辑生效日期**/
+	function editDateButton(storeBankAccountId,startDate){
+		$("#editDateInput").val(startDate);
+		var modifyUserId="1";//从登陆接口中获取
+		$("#editDateDialog").dialog({
+			width:300,
+			modal:true,
+			buttons:[
+			         {
+			        	 text:"确定",
+			        	 click:function(){
+			        		 POST(updateDateUrl,JSON.stringify({startDate:$("#editDateInput").val(),modifyUserId:modifyUserId,storeBankAccountId:storeBankAccountId}),function(result){
+								if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+									window.message({title:"提示信息",text: result.rspMsg});
+									return;
+								}
+			        			 $(listId).trigger("reloadGrid");
+			        		 })
+			        		 $(this).dialog("close");
+			        	 }
+			         },
+			         {
+			        	 text:"取消",
+			        	 click:function(){
+			        		 $(this).dialog("close");
+			        	 }
+			         }
+			         ]
+		});
+	}
+	function keyLogin(e){
+		var keynum="";
+		if(window.event){
+		  keynum = e.keyCode
+		}else if(e.which){
+		  keynum = e.which
+		 }
+		if (keynum == 13){
+			var bankAccountName=$("#fastQueryText").val();
+			var bankAccountName=$("#fastQueryText").val();
+			var postData={bankAccountName:bankAccountName,bankCode:"",bankAccount:"",createDateBegin:"",createDateEnd:""};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+	function keyLogins(e){
+		var keynum="";
+		if(window.event){
+		  keynum = e.keyCode
+		}else if(e.which){
+		  keynum = e.which
+		 }
+		if (keynum == 13){
+			var postData={};
+			var bankAccountName=$("#openBankAccountSearch").val();
+			var bankCode=$("#openBankSearch").data("chosen").selectedItem();
+			bankCode=bankCode?bankCode["value"]:"";
+			var bankAccount=$("#bankAccountSearch").val();
+			var createDateBegin=$("#startDateSearch").val();
+			var createDateEnd=$("#endDateSearch").val();
+			postData={bankAccountName:bankAccountName,bankCode:bankCode,bankAccount:bankAccount,createDateBegin:createDateBegin,createDateEnd:createDateEnd};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" method="post">
+						<input name="fileName" type="hidden" value="oss/findBankAccountList.xlsx" />
+   					 	<input name="componentName" type="hidden" value="findBankAccountList" />
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" id="bankCodeForm" name="bankCode"/>
+									开户行：<select data-xtype="chosen" style="width:208px;" id="openBankSearch"></select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">
+									银行账号：<input type="text" name="bankAccount" id="bankAccountSearch" onkeydown="return keyLogins(event)"/>
+								</td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">
+									账户名称：<input type="text" name="bankAccountName" id="openBankAccountSearch" onkeydown="return keyLogins(event)"/>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">
+									创建时间：<input type="text" name="createDateBegin" onkeydown="return keyLogins(event)" id="startDateSearch"/>~<input name="createDateEnd" id="endDateSearch" onkeydown="return keyLogins(event)" type="text"/>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td><button type="button" id="insertBTN">添加</button></td>
+						<td class="buttons"><button id="exportForm"><i class="fa fa-paperclip"></i>导出</button></td>
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="fastQueryText" xdata-type="text" placeholder="输入账户名称查询" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:160px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	
+	<!-- 新增页面 -->
+	<div class="page-add-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i>添加账户</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="addSaveBTN"><i class="fa fa-check"></i>保存</button>
+					<button id="addBackBTN"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content" style="padding:0px;">
+				<table class="add-detail-panel">
+					<tr><td class="tdRight">账户名称</td><td><input id="addAccountName" type="text"/></td></tr>
+					<tr><td class="tdRight">银行账户</td><td><input id="addBankAccount" type="text"/></td></tr>
+					<tr><td class="tdRight">收款账户开户行</td><td><input id="addOpenBank" disabled type="text"/><input type="hidden" id="addOpenBankInput"/></td></tr>
+					<tr><td class="tdRight">收款账户开户支行</td><td style="position:relative;"><input id="addOpenBranch" type="text"/><span class="desc">(具体支行名称 如：北京XX支行等)</span></td></tr>
+				</table>
+		    </div>
+		</div>
+	</div>
+	
+	<!-- 编辑页面 -->
+	<div class="page-edit-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i>编辑账户</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="editSaveBTN"><i class="fa fa-check"></i>保存</button>
+					<button id="editResetBTN" ><i class="fa fa-undo"></i>重置</button>
+					<button id="editBackBTN"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content" id="editFormPanel">
+			<div class="page-inner-content" style="padding:0px;">
+				<table class="add-detail-panel">
+					<tr><td class="tdRight">账户名称</td><td><input name="bankAccountName" id="editAccountName" type="text"/></td></tr>
+					<tr><td class="tdRight">银行账号</td><td><input name="bankAccount" id="editBankAccount" type="text"/></td></tr>
+					<tr><td class="tdRight">收款账户开户行</td><td>
+						<input id="editOpenBank" type="text" disabled/><input type="hidden" name="bankCode" id="editOpenBankInput"/> 
+					</td></tr>
+					<tr><td class="tdRight">收款账户开户支行</td><td style="position:relative;"><input name="bankBranch" id="editOpenBranch" type="text"/><span class="desc">(具体支行名称 如：北京XX支行等)</span></td></tr>
+				</table>
+		    </div>
+		</div>
+	</div>
+
+	<!-- 查看页面 -->
+	<div class="page-look-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i>查看已绑定门店</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="lookSearchBTN" ><i class="fa fa-search"></i>查询</button>
+					<button id="lookBackBTN"><i class="fa fa-hand-o-left"></i>返回</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content" style="padding:0px;">
+				<div class="look-search-head">
+					门店名称：<input id="lookStoreNameSearch" type="text"/>
+				</div>
+				<div style="display:none;margin:12px auto;width:250px;height:30px;" id="editDateDialog">
+					<input id="editDateInput" placeholder="请输入生效日期" style="text-indent:3px;width:250px;height:30px;line-height:30px;border:1px solid #ccc;" data-xtype="datetime"/>
+				</div>
+				<table id="lookContentList"></table>
+				<div id="pagerLook"></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

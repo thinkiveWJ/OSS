@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<style type="text/css">
+.history-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	loadUrl = "../../../masterdata/brand.do?command=load", 
+	saveUrl = "../../../masterdata/brand.do?command=submit", 
+	listUrl = "../../../masterdata/brand.do?command=search";
+	
+	$(function() {
+		_initButtons({
+			historyBackBTN:function(){
+				hideSlidePanel('.history-panel');
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'brandName',width : 250}, 
+			     			{name : 'brandAbbreviation',width : 200,align:"center"},
+			     			{name : 'remark',autoWidth : true}, 
+			     			{name : 'status',width : 100,align : "center"},
+			     			{name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'brandName',width : 250}, 
+			     			{name : 'remark',autoWidth : true}, 
+			     			{name : 'status',width : 100,align : "center"},
+			     			{name : 'status',width : 100,align : "center"}
+			     			], 
+			     			_colNames = [' ','序号', '区域', '城市', '门店', '已绑定账户名称','已绑定开户行','已绑定银行账号','状态','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		
+		//查看绑定银行账户
+		lookHistory();
+		
+	});
+	/*******查看绑定银行账户********/
+	function lookHistory(){
+		$("#historyBTN").unbind('click').bind('click',function(){
+			initHistoryGrid();
+			$(".history-panel").show({
+		        effect: "fade",
+		        duration: 200,
+		        complete: function () {
+		        	  var $hpanel=$(".history-panel .page-inner-content"),w=$hpanel.width(),h=$hpanel.height();
+		        	  $tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+		        }});
+		});
+	}
+	/**填充绑定银行账户数据**/
+	function initHistoryGrid(){
+		listId="#historyContentList";
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'brandName',width : 250}, 
+			     			{name : 'brandAbbreviation',width : 200,align:"center"},
+			     			{name : 'remark',autoWidth : true}, 
+			     			{name : 'status',width : 100,align : "center"}
+			     			];
+			     			_colNames = [' ','序号', '账户名称','开户行', '银行账号'];
+	   window.$tlist=	 $(listId).jqGrid($.extend(defaultGridOpts, {url:loadUrl,colNames : _colNames,colModel : _colModel,pager:null}));
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm">
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">区域：</td>
+								<td>
+									<select data-xtype="chosen" name="store" style="width:150px;">
+										<option>请选择</option>
+										<option>区域</option>
+										<option>区域</option>
+									</select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">城市：</td>
+								<td>
+									<select data-xtype="chosen" name="store" style="width:150px;">
+										<option>请选择</option>
+										<option>区域</option>
+										<option>区域</option>
+									</select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">门店：</td>
+								<td>
+									<select data-xtype="chosen" name="bank" style="width:150px;">
+										<option>请选择</option>
+										<option>区域</option>
+										<option>区域</option>
+									</select>
+								</td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch">
+										<i class="fa fa-search"></i>查询
+									</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板">
+										<i class="fa  fa-angle-down" style="margin-right:0px;"></i>
+									</button>
+								</td>
+							</tr>	
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">开户行：</td>
+								<td>
+									<select data-xtype="chosen" name="bank" style="width:150px;">
+										<option>请选择</option>
+										<option>区域</option>
+										<option>区域</option>
+									</select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">账户名称：</td>
+								<td><input style="width:142px;padding:3px;" type="text"/></td>
+								<td style="padding-left: 30px;text-align:right;">银行账号：</td>
+								<td><input style="width:142px;padding:3px;" type="text"/></td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0"
+					border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i
+							class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="historyBTN"><i class="fa fa-plus"></i>绑定银行账户</button></td>
+						<td style="padding-left: 24px; padding-right: 5px;">
+							<input id="fastQueryText" xdata-type="text" placeholder="可以输入账户名称查询"
+							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" />
+						</td>
+						<td>
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data">备用金信息</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- 绑定银行账户 -->
+	<div class="history-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i>绑定银行信息</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="bankPanelSearch"><i class="fa fa-search"></i>搜索</button>
+					<button id="bankPanelSave"><i class="fa fa-check"></i>保存</button>
+					<button id="historyBackBTN"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content" style="padding:0px;">
+				<div class="bank-lock-search split">
+					<table style="height:50px;">
+						<tr>
+							<td style="padding-left:30px;">账户名称：</td>
+							<td>
+								<input type="text" style="width:132px;padding:3px;"/>
+							</td>
+							<td style="padding-left: 30px;text-align:right;">开户行：</td>
+							<td>
+								<select data-xtype="chosen" name="bank" style="width:150px;">
+									<option>请选择</option>
+									<option>区域</option>
+									<option>区域</option>
+								</select>
+							</td>
+							<td style="padding-left:24px;">银行账号：</td>
+							<td>
+								<input type="text" style="width:132px;padding:3px;"/>
+							</td>
+						</tr>						
+					</table>
+				</div>
+				<div class="history-content-title split">门店维护信息</div>
+				<table id="historyContentList"></table>
+		    </div>
+		</div>
+	</div>
+</body>
+</html>

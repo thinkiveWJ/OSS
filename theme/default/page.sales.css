@@ -1,0 +1,29 @@
+@charset "utf-8";
+.left{float:left;}
+.clearfix{clear:both;}
+.hide{display:none;}
+.add-content-step1{margin-left:300px;border:1px solid #ccc;width:902px;}
+.add-content-step1 .add-content-step1-head{width:100%;height:50px;}
+ul.add-content-step1-head li{width:300px;height:50px;line-height:50px;font-size:16px;background:#ccc;text-align:center;}
+ul.add-content-step1-head li.on{background:#00a06a;color:#fff;}
+ul.add-content-step1-head li + li{margin-left:1px;}
+.add-detail-step1{width:700px;margin:30px auto;}
+.add-detail-step1 .add-detail-step1-head {height:50px;line-height:50px;}
+.add-detail-step1 .add-detail-step1-head span{color:#fd5555;}
+table.add-detail-step1-table td{height:50px;}
+table.add-detail-step1-table td.content-right{text-align:right;}
+table.add-detail-step1-table td.content-right span{color:#fd5555;}
+table.add-detail-step1-table td input{padding:3px;}
+table.add-detail-step1-table td a{}
+
+.add-detail-step1-table input[type='radio']{vertical-align:middle;}
+.choose-setp2-content{width:100%;}
+.choose-setp2-content .choose-content-head{width:100%;height:30px;background:#00a06a;}
+.choose-setp2-content table.choose-content-condition {margin-top:24px;border-collapse:   separate;   border-spacing:12px;}
+.choose-content-table{padding:0;margin:0;width:100%;border:1px solid #ccc;}
+table.add-detail-step1-table tr td.choose-content{padding-left:40px;}
+
+
+
+
+

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<!-- <link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/> -->
+<link href="../../../theme/default/page.members.css" rel="stylesheet"/>
+<link href="../../../theme/default/ui.pick.css" rel="stylesheet" />
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.getDictionaryData.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadPic.js"></script>
+<script type="text/javascript" src="../../../js/ui.pick.js"></script>
+
+
+<link rel="stylesheet" href="../../../theme/default/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="../../../js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="../../../js/jquery.ztree.excheck.js"></script>
+<style type="text/css">
+.pay-info-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.pay-choose-channel input[type='radio']{vertical-align:middle;}
+.pay-choose-channel  .channel-details{margin:12px auto;}
+.width120{width:100px;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	firstFlag=true,
+	listUrl = "../../../coupon/findCouponList.do",
+	queryFindCouponTypeUrl="../../../coupon/findCouponType.do",
+	queryFindCouponStatus="../../../coupon/findCouponStatus.do";
+	
+	$(function() {
+		_initButtons({
+			advancedSearch: advancedSearchFunc,
+			exportForm:function(){
+				$("#searchForm").submit();
+			},
+			addBTN:function(){
+				showSlidePanel(".page-add-panel",function(){
+					addCouponListFunc();
+				});
+			},
+			addCancel:function(){
+				hideSlidePanel(".page-add-panel");
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'couponName',autoWidth : true,align:"center"}, 
+			     			{name : 'maxAssignNum',autoWidth : true,align:"center"}, 
+			     			{name : 'generateNum',autoWidth : true,align : "center"},
+			     			{name : 'sentNum',autoWidth : true,align:"center"},
+			     			{name : 'inuseNum',autoWidth : true,align : "center"},
+			     			{name : 'unusedNum',autoWidth : true,align:"center"}, 
+			     			{name : 'createTime',autoWidth : true,align : "center"},
+			     			{name : '',autoWidth : true,align : "center",formatter:function(arg1,arg2,arg3){
+			     					return '<button class="wj-jqgrid-button" onclick="editButton(\''+arg3.couponId+'\')">编辑</button>'+
+			     							'<button class="wj-jqgrid-button" onclick="banButton(\''+arg3.couponId+'\')">删除</button>';
+			     				}
+			     			}
+			     			], 
+			     			_colNames = ['', '礼券名称','最大发放数','生成数','发放数','已使用','未使用','创建时间','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		$("#addStartDate").datepicker({
+			changeMonth: true,
+		    changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#addEndDate" ).datepicker( "option", "minDate", selectedDate );
+		      }
+		});
+		$("#addEndDate").datepicker({
+			changeMonth: true,
+		    changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#addStartDate" ).datepicker( "option", "maxDate", selectedDate );
+		      }
+		});
+		$.fn.upLoadPicFunc("#uploadPicAdd","#uploadPicAddImg");
+		//初始化方法
+		_initFunc();
+	});
+	/*****初始化方法*****/
+	function _initFunc(){
+		//查询礼券类型下拉列表
+		POST(queryFindCouponTypeUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows;
+			for(var i in result){
+				result[i]={text:result[i].couponTypeName,value:result[i].couponType};
+			}
+			result.unshift({text:"",value:""});
+			$("#couponTypeSearch").data("chosen")._clearOptions();
+			$("#addCouponType").data("chosen")._clearOptions();
+			$("#couponTypeSearch").data("chosen")._addOptions(result);
+			$("#addCouponType").data("chosen")._addOptions(result);
+		});
+		//查询状态下拉列表
+		POST(queryFindCouponStatus,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows;
+			for(var i in result){
+				result[i]={text:result[i].couponStatusName,value:result[i].couponStatus};
+			}
+			result.unshift({text:"",value:""});
+			$("#couponStatusSearch").data("chosen")._clearOptions();
+			$("#couponStatusSearch").data("chosen")._addOptions(result);
+		});
+	}
+	/****新增方法*****/
+	function addCouponListFunc(){
+		$("#addChooseGoods").focus(function(){
+			showSlidePanel(".page-add-step2-choose");
+		});
+	}
+	
+	
+	
+	
+	
+	
+	
+	/*****查询**/
+	function advancedSearchFunc(){
+		var postData={};
+		var couponName=$("#couponNameSearch").val(),
+			reducePointFrom=$("#reducePointFromSearch").val(),
+			reducePointTo=$("#reducePointToSearch").val(),
+			couponType="",
+			status="";
+		couponType=$("#couponTypeSearch").data("chosen").selectedItem();
+		couponType=couponType?couponType["value"]:"";
+		status=$("#couponStatusSearch").data("chosen").selectedItem();
+		status=status?status["value"]:"";
+		postData={couponName: couponName,reducePointFrom: reducePointFrom,reducePointTo: reducePointTo,couponType: couponType,status: status};
+		$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	}
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+			advancedSearchFunc();
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<table cellpadding="0" cellspacing="0" border="0">
+						<tr>
+							<td style="text-align:right;padding-left:30px;">礼券名称：</td>
+							<td><input type="text" id="couponNameSearch" class="" onkeydown="return keyLogins(event)"/></td>
+							<td style="text-align:right;padding-left:30px;">礼券类型：</td>
+							<td><select id="couponTypeSearch" data-xtype="chosen" style="width:209px;"></select></td>
+							<td style="padding-left:12px;">
+								<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+								<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align:right;padding-left:30px;">积分数：</td>
+							<td ><input type="text" onkeydown="return keyLogins(event)" id="reducePointFromSearch"/>-<input type="text" id="reducePointToSearch" onkeydown="return keyLogins(event)"/></td>
+							<td style="text-align:right;padding-left:30px;">状态：</td>
+							<td><select id="couponStatusSearch" data-xtype="chosen" style="width:209px;"></select></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="addBTN"><i class="fa fa-plus"></i>添加</button></td>
+<!-- 						<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" enctype="multipart/form-data;" method="post"> -->
+<!-- 							<input name="fileName"  value="oss/reportForm/inquiryPayInfoGatherByGoods.xlsx" type="hidden"/> -->
+<!--     					    <input name="componentName" value="inquiryPayInfoGatherByGoods" type="hidden"/> -->
+<!-- 							<td style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 								id="fastQueryText" xdata-type="text" name="styleName" placeholder="输入姓名查询" onkeydown="return keyLogin(event)" -->
+<!-- 								style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td> -->
+<!-- 						</form> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- 新增模板 -->
+	<div class="page-add-panel full-drop-panel">
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="addSave"><i class="fa fa-check"></i>保存</button>
+					<button id="addCancel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content gift-add-table active-add-table">
+				<table >
+					<tr><td>礼券名称：</td><td class="content-left"><input/></td>
+						<td>头像：</td>
+						<td class="content-left" rowspan="4" style="cursor:pointer;position:relative;">
+							<img style="width:260px;height:200px;" src="../../../theme/default/images/uploadImg.png" id="uploadPicAddImg"/>
+							<input type="file" id="uploadPicAdd" style="cursor:pointer;position:absolute;left:0;top:0;z-index:1;width:260px;height:200px;opacity:0;filter:alpha(opacity=0;)"/>
+						</td>
+					</tr>
+					<tr><td>礼券类型：</td><td class="content-left"><select id="addCouponType" data-xtype="chosen" style="width:178px;"></select></td>
+					</tr>
+					<tr><td>折扣：</td><td class="content-left"><input placeholder="1~9之间的整数"/></td></tr>
+					<tr><td>选择购买：</td><td class="content-left"><input type="text" id="addChooseGoods" readonly="readonly"/></td>
+					<tr><td>编码前缀：</td><td class="content-left"><input/><td>编码长度：</td><td class="content-left"><input  placeholder="6~9之间的整数"/></td></tr>
+					<tr><td>最低消费金额：</td><td class="content-left"><input placeholder="空或0表示不受限制"/></td>
+						<td>兑换所需积分：</td><td class="content-left"><input placeholder="空或0表示不可兑换"/></td></tr>
+					<tr>
+						<td>最大发放数：</td><td class="content-left"><input placeholder="空或0表示不受限制"/><td>
+						<td style="text-align: left;width:422px;">
+							<label class="left" for="account">用户兑换：<input id="account" type="checkbox"/></label>
+							<label class="left" for="account1">推广活动：<input id="account1" type="checkbox"/></label>
+							<label class="left" for="account2">活动推送：<input id="account2" type="checkbox"/></label>
+							<div class="clearfix"></div>
+						</td>
+					</tr>
+					<tr>
+						<td>验证类型：</td>
+						<td class="content-left">
+							<label><input type="radio" name="code"/>有效天数：<input style="width:100px;" placeholder="自发放日算起"/></label>
+						</td>
+						<td><label><input type="radio" name="code"/>有效时间：</label></td>
+						<td class="content-left">
+							<input id="addStartDate" style="width:100px;"/>&nbsp;-&nbsp;<input style="width:100px;" id="addEndDate"/>
+						</td>
+					</tr/>
+					<tr>
+						<td>细则说明：</td>
+						<td class="content-left" colspan="3">
+							<textarea style="width:100%;height:80px;border:1px solid #ccc;"></textarea>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	<div class="page-add-step2-choose full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;position:relative;">
+					<button id="chooseImportStep2"><i class="fa fa-pencil"></i>导入
+						<form action="../../file/itemUpload.do" id="uploadStep2Form" enctype="multipart/form-data;" method="post" onsubmit="return saveReport();">
+							<input name="itemFile" id="uploadStep2" type="file" style="position:absolute;left:0px;top:0;bottom:0;right:0px;opacity:0;filter:Alpha(opacity=0);cursor:pointer;"/>
+							<input name="uploadInpFileName" id="uploadStep2Name" type="hidden"/>
+							<input name="promotionID" id="promotionIDUpload" type="hidden"/>
+							<input name="isGiveGoods" value="1" type="hidden"/>
+						</form>
+					</button>
+					<button id="chooseSaveStep2"><i class="fa fa-check"></i>保存</button>
+					<button id="chooseCancelStep2"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<!-- 选择购买内容 -->
+		<div class="page-content">
+			<div class="choose-setp2-content choose-setp2-content2">
+				<table class="choose-content-condition" style="width:100%;border:1px solid #ccc">
+					<tr>
+						<td style="padding-left:24px;">选择范围：
+							<input data-url="./pages/members/integralVoucher/couponListGoodsLeftTree.html" id="goodsEffectRang" data-xtype="pick"  data-dialogWidth="600" data-dialogHeight="400" style="width:300px;"  name="jde"/>
+						</td>
+					</tr>
+				</table>
+				<table id="chooseTableStep2"></table>
+				<div id="choosePageStep2"></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

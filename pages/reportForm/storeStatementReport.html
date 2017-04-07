@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../js/jquery.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../js/page.common.js"></script>
+<script type="text/javascript" src="../../js/ui.getDictionaryData.js"></script>
+<style type="text/css">
+.pay-info-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.pay-choose-channel input[type='radio']{vertical-align:middle;}
+.pay-choose-channel  .channel-details{margin:12px auto;}
+.width120{width:100px;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	listUrl = "../../reportForms/inquirySettlementByStoreId.do",
+	queryPayWays="../../payMode/showPayModeList.do";
+	
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				var postData={storeId : $("#fastQueryText").val(),payModeId : ""};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch :advancedSearchFunc,
+			exportForm:function(){
+				var payModeId=$("#payModeNameSearch").data("chosen").selectedItem();
+				payModeId=payModeId?payModeId["value"]:"";
+				$("#payModeIdInput").val(payModeId);
+				$("#searchForm").submit();
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'storeId',autoWidth : true,align:"center"}, 
+			     			{name : 'payModeName',autoWidth : true,align : "center"},
+			     			{name : 'posId',autoWidth : true,align:"center"},
+			     			{name : 'totalAmount',autoWidth : true,align:"center"}
+			     			], 
+			     			_colNames = [' ', '店铺代码', '付款方式','POSID', '总金额'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		POST(queryPayWays,JSON.stringify({}),function(result){
+			$("#payModeNameSearch").data("chosen")._clearOptions();
+			var result=result.rows;
+			for(var i in result){
+				result[i]={text:result[i].payModeName,value:result[i].payModeId};
+			}
+			result.unshift({text:"",value:""});
+			$("#payModeNameSearch").data("chosen")._addOptions(result);
+		});
+	});
+	/********按照多个条件查询*******/
+	function advancedSearchFunc(){
+		var postData={};
+		var storeId=$("#storeIdSearch").val();
+		var payModeId=$("#payModeNameSearch").data("chosen").selectedItem();
+		payModeId=payModeId?payModeId["value"]:"";
+		postData={storeId : storeId,payModeId : payModeId};
+		$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var postData={storeId : $("#fastQueryText").val(),payModeId : ""};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        advancedSearchFunc();
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" enctype="multipart/form-data;"  method="post">
+						<input name="fileName"  value="oss/reportForm/inquirySettlementByStoreId.xlsx" type="hidden"/>
+    					<input name="componentName" value="inquirySettlementByStoreId" type="hidden"/>
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="text-align:right;padding-left:30px;">店铺代码：<input name="storeId" onkeydown="return keyLogins(event)" type="text" id="storeIdSearch"/></td>
+								<input type="hidden" name="payModeId" id="payModeIdInput"/>
+								<td style="text-align:right;padding-left:30px;">付款方式：<select data-xtype="chosen" id="payModeNameSearch" style="width:208px;"/></td>
+								<td style="padding-left:12px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="exportForm"><i class="fa fa-paperclip"></i>导出</button></td>
+						<td style="padding-left: 24px; padding-right: 5px;"><input
+							id="fastQueryText" xdata-type="text" placeholder="输入店铺代码查询" onkeydown="return keyLogin(event)"
+							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td>
+						<td>
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	
+</body>
+</html>

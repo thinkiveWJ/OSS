@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link rel="stylesheet" href="../../../theme/default/page.bankDeposit.css"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/page.area.city.store.js"></script>
+<script type="text/javascript" src="../../../js/ui.getDictionaryData.js"></script>
+<style type="text/css">
+.page-look-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.page-content .select{padding-left:24px;height:60px;line-height:60px;}
+table.single-table{width:100%;margin-top:24px;border:solid #ccc; border-width:1px 0px 0px 1px;text-align:center;}
+table.single-table td{border:solid #ccc; border-width:0px 1px 1px 0px;line-height:30px;}
+table.single-table td.ensure input{padding:0;height:20px;line-height:20px;text-indent:3px;margin-right:5px;}
+table.single-table td.ensure a{display:inline-block;width:60px;height:24px;line-height:24px;background:#01a06a;color:#fff;text-align:center;}
+table.single-table td.ensure a:hover{background:#018659;}
+table.single-table td.send a,table.single-table td.chonse-store a{display:inline-block;padding:0 12px;background:#01a06a;color:#fff;height:24px;line-height:24px;text-align:center;}
+table.single-table td.send a:hover,table.single-table td.chonse-store a:hover{background:#018659;}
+.page-editor-panel{position:relative;}
+.bind-account-set table.bind-account-set-details {border-collapse:separate;border-spacing:24px; }
+.bind-account-set table.bind-account-set-details td.right{text-align:right;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	indexLookInfo=true,//作为判断历史记录是否首次进入的标志true首次进入
+	queryArea="../../../org/findAllTheRegion.do",
+	queryCity="../../../org/findCityListByRegionId.do",
+	queryCityArea="../../../org/findDistrictListByCityId.do",
+	queryStore="../../../org/findStoreListByDistrictId.do",
+	queryOpenBankListUrl="../../../bankAccount/findBankCodeList.do",
+	queryOpenBankByBankAccountUrl="../../../bankAccount/findBankCodeBySubAccount.do",
+	queryBankAccountUrl="../../../bankAccount/findBankAccountList.do",
+	listUrl = "../../../storeBankAccount/init.do",
+	querySearchUrl="../../../storeBankAccount/findStoreBankAccountList.do",
+	bindBankAccount="../../../storeBankAccount/bindStoreBankAccount.do";
+
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				var bankAccount=$("#fastQueryText").val();
+				var regionId="",cityId="",districtId="",storeId="";
+				var postData={bankAccountName:"",districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccount:bankAccount}
+				$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch:function(){
+				var postData={};
+				var storeId=$("#storeSearch").data("chosen").selectedItem();
+				var bankAccountName=$("#accountNameSearch").val();
+				var bankAccount=$("#bankAccountSearch").val();
+				var districtId=$("#cityAreaSearch").data("chosen").selectedItem();
+				var cityId=$("#citySearch").data("chosen").selectedItem();
+				var regionId=$('#areaSearch').data("chosen").selectedItem();
+				if(storeId){
+					storeId=storeId["value"];
+					regionId=regionId["value"],cityId=cityId["value"],districtId=districtId["value"];
+					postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccountName:bankAccountName,bankAccount:bankAccount}
+					$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+				}else if(districtId){
+					districtId=districtId["value"];
+					regionId=regionId["value"],cityId=cityId["value"],storeId="";
+					postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccountName:bankAccountName,bankAccount:bankAccount}
+					$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+				}else if(cityId){
+					cityId=cityId["value"];
+					regionId=regionId["value"],districtId="",storeId="";
+					postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccountName:bankAccountName,bankAccount:bankAccount}
+					$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+				}else if(regionId){
+					regionId=regionId["value"];
+					cityId="",districtId="",storeId="";
+					postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccountName:bankAccountName,bankAccount:bankAccount}
+					$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+				}else{
+					regionId="",cityId="",districtId="",storeId="";
+					postData={bankAccountName:bankAccountName,districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccount:bankAccount}
+					$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+				}
+			},
+			exportForm:function(){
+				var districtId=$("#cityAreaSearch").data("chosen").selectedItem();
+				var cityId=$("#citySearch").data("chosen").selectedItem();
+				var reginId=$('#areaSearch').data("chosen").selectedItem();
+				var storeId=$("#storeSearch").data("chosen").selectedItem();
+				reginId=reginId?reginId["value"]:"";
+				$("#reginIdForm").val(reginId);
+				cityId=cityId?cityId["value"]:"";
+				$("#cityIdForm").val(cityId);
+				districtId=districtId?districtId["value"]:"";
+				$("#districtIdForm").val(districtId);
+				storeId=storeId?storeId["value"]:"";
+				$("#storeIdForm").val(storeId);
+				$("#searchForm").submit();
+			},
+			lookBackBTN:function(){
+				hideSlidePanel(".page-look-panel",function(){
+					listId = "#list2",
+					pagerId = '#pager2';
+					$(listId).trigger("reloadGrid");
+				});
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'regionName',width : 150,align:"center"}, 
+			     			{name : 'cityName',width : 150,align:"center"},
+			     			{name : 'districtName',width : 150,align:"center"}, 
+			     			{name : 'storeName',width : 150,align : "center"},
+			     			{name : 'bankAccountName',width : 150,align:"center"},
+			     			{name : 'bankName',width : 150,align:"center",}, 
+			     			{name : 'bankAccount',width : 150,align:"center",}, 
+			     			{name : 'bindingFlg',width : 150,align:"center",}, 
+			     			{name : 'startDate',width : 150,align:"center"}, 
+			     			{name:'',width : 150,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="editButton(\''+arg3.storeId+'\')">绑定银行账户</button>';
+			     			}}
+			     			], 
+			     			_colNames = ['','区域', '城市', '城区', '门店', '已绑定账户名称','已绑定开户行','已绑定银行账户','状态','生效时间','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		initAreaSearch(queryArea,queryCity,queryCityArea,queryStore);//初始化城市区域城区门店搜索条件的下拉框
+	});
+	/******点击绑定银行账户******/
+	function editButton(storeId){
+		showSlidePanel(".page-look-panel",function(){
+			lookFunc(storeId);
+			 var $hpanel=$(".page-look-panel .page-content"),$tx=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv"),$tx2=$hpanel.find(".ui-jqgrid-pager"),
+			 w=$hpanel.width(),h=$hpanel.height()-12-8-$tx.height()-$tx2.height();
+       	 	$tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+	       	 	$("#openBankName").val("");
+	       	 	$("#bankCodeInput").val("");
+				$("#accountName").val("");
+				$("#bankAccount").val();
+				$("#bankAccount").change(function(){
+					var bankAccount=$(this).val();
+					POST(queryOpenBankByBankAccountUrl,JSON.stringify({bankAccount : bankAccount}),function(result){
+						if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+							window.message({title:"提示信息",text: result.rspMsg});
+							return;
+						}
+						var bankName=result["data"]?result["data"]["bankName"]:"";
+						$("#openBankName").val(bankName);
+						var bankCode=result["data"]?result["data"]["bankCode"]:"";
+						$("#bankCodeInput").val(bankCode);
+					});
+				});
+				$('#startDate').val();
+	    	 	$(".bind-account-set").dialog({
+	    	 		width:600,
+	    	 		modal:true,
+	    	 		buttons:[
+	    	 		         {
+	    	 		        	 text:"确定",
+	    	 		        	 click:function(){
+	    	 		        		var data=$("#setBankAccount").getFormData();
+	    	 		        		data["storeId"]=storeId;
+	    	 		        		var openBankName=$("#openBankName").val();
+	    	 						if(openBankName==""){
+	    	 							window.message({title:"提示信息",text:"请输入有效的银行账户"});
+	    	 							return;
+	    	 						}
+	    	 						if($("#startDate").val()==""){
+	    	 							window.message({title:"提示信息",text:"生效时间不能为空"});
+	    	 							return;
+	    	 						}
+	    	 		        		POST(bindBankAccount,JSON.stringify(data),function(result){
+	    	 		        			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+		    	 		       				window.message({title:"提示信息",text: result.rspMsg});
+		    	 		       				return;
+		    	 		       			}
+		       	 		        		$(listId).trigger("reloadGrid");
+		       	 		        		$(".bind-account-set").dialog("close");
+	    	 		        		});
+	    	 		        	 }
+	    	 		         },
+	    	 		         {
+	    	 		        	 text:"取消",
+	    	 		        	 click:function(){
+	    	 		        		 $(this).dialog("close");
+	    	 		        	 }
+	    	 		         }
+	    	 		         ]
+	    	 	});
+		});
+	}
+	/*****查看绑定信息****/
+	function lookFunc(storeId){
+		listId="#lookContentList";
+		pagerId="#pagerLook";
+		if(indexLookInfo!=true){
+			window.$tlist=$(listId).jqGrid("setGridParam", {page:1,url: queryBankAccountUrl,postData:{storeId:storeId}}).hideCol("somecol").trigger("reloadGrid");
+			return;
+		}
+		indexLookInfo=false;
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'bankAccountName',autoWidth : true,align:"center"}, 
+			     			{name : 'bankName',autoWidth : true,align:"center"},
+			     			{name : 'bankAccount',autoWidth : true,align:"center"}, 
+			     			{name : 'startDate',autoWidth : true,align : "center"},
+			     			], 
+			     			_colNames = ['','账户名称', '开户行', '银行账户', '生效时间'];
+		window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url: queryBankAccountUrl,colNames : _colNames,postData:{storeId:storeId},colModel : _colModel,pager : pagerId}));
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        var bankAccount=$("#fastQueryText").val();
+			var regionId="",cityId="",districtId="",storeId="";
+			var postData={bankAccountName:"",districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccount:bankAccount}
+			$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid");  
+		}
+	}
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var postData={};
+			var storeId=$("#storeSearch").data("chosen").selectedItem();
+			var bankAccountName=$("#accountNameSearch").val();
+			var bankAccount=$("#bankAccountSearch").val();
+			var districtId=$("#cityAreaSearch").data("chosen").selectedItem();
+			var cityId=$("#citySearch").data("chosen").selectedItem();
+			var regionId=$('#areaSearch').data("chosen").selectedItem();
+			if(storeId){
+				storeId=storeId["value"];
+				regionId=regionId["value"],cityId=cityId["value"],districtId=districtId["value"];
+				postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccountName:bankAccountName,bankAccount:bankAccount}
+				$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			}else if(districtId){
+				districtId=districtId["value"];
+				regionId=regionId["value"],cityId=cityId["value"],storeId="";
+				postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccountName:bankAccountName,bankAccount:bankAccount}
+				$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			}else if(cityId){
+				cityId=cityId["value"];
+				regionId=regionId["value"],districtId="",storeId="";
+				postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccountName:bankAccountName,bankAccount:bankAccount}
+				$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			}else if(regionId){
+				regionId=regionId["value"];
+				cityId="",districtId="",storeId="";
+				postData={districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccountName:bankAccountName,bankAccount:bankAccount}
+				$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			}else{
+				regionId="",cityId="",districtId="",storeId="";
+				postData={bankAccountName:bankAccountName,districtId:districtId,cityId:cityId,regionId:regionId,storeId:storeId,bankAccount:bankAccount}
+				$(listId).jqGrid("setGridParam", {page:1,url : querySearchUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			}
+		}
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" method="post">
+						<input name="fileName" type="hidden" value="oss/findStoreBankAccountList.xlsx" />
+    					<input name="componentName" type="hidden" value="findStoreBankAccountList" />
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" name="regionId" id="reginIdForm"/>
+									区域：<select data-xtype="chosen" style="width:208px;" id="areaSearch"></select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" name="cityId" id="cityIdForm"/>
+									城市：<select data-xtype="chosen" style="width:208px;" id="citySearch"></select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" name="districtId" id="districtIdForm"/>
+									城区：<select data-xtype="chosen" style="width:208px;" id="cityAreaSearch"></select>
+								</td>
+								<td style="padding-left: 30px;">
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">
+									<input type="hidden" name="storeId" id="storeIdForm"/>
+									门店：<select data-xtype="chosen" style="width:208px;" id="storeSearch"></select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">账户名称：<input onkeydown="return keyLogins(event)" id="accountNameSearch" name="bankAccountName" type="text"/></td>
+								<td style="padding-left: 30px;text-align:right;">银行账号：<input onkeydown="return keyLogins(event)" id="bankAccountSearch" name="bankAccount" type="text"/></td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons"><button id="exportForm"><i class="fa fa-paperclip"></i>导出</button></td>
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="fastQueryText" xdata-type="text" placeholder="输入银行账号查询" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:160px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	
+	<!-- 查看绑定银行账号 -->
+	<div class="page-look-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i>绑定银行账号记录</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+<!-- 					<button id="lookSaveBTN" ><i class="fa fa-check"></i>保存</button> -->
+					<button id="lookBackBTN"><i class="fa fa-hand-o-left"></i>返回</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content" style="padding:0px;">
+<!-- 				<div class="look-search-head"> -->
+<!-- 					绑定银行账号记录 -->
+<!-- 				</div> -->
+				<div class="bind-account-set" style="display:none">
+					<div class="bind-account-set-title">绑定银行账户设置</div>
+					<table class="bind-account-set-details" id="setBankAccount" style="width:500px;margin:12px auto;">
+						<tr><td class="right">账户名称：</td><td><input name="bankAccountName" id="accountName" type="text"/></td></tr>
+						<tr><td class="right">银行账户：</td><td><input name="bankAccount" id="bankAccount" type="text"/></td></tr>
+						<input type="hidden"  name="bankCode" id="bankCodeInput"/>
+						<tr><td class="right">开户行：</td><td><input id="openBankName" disabled /></td></tr>
+						<tr><td class="right">开户行支行：</td><td><input name="bankBranch" id="bankBranchName" type="text" /></td></tr>
+						<tr><td class="right">设定生效时间：</td><td><input name="startDate" id="startDate"  data-xtype="datetime"/></td></tr>
+					</table>
+				</div>
+				<table id="lookContentList"></table>
+				<div id="pagerLook"></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

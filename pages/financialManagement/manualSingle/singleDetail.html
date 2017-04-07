@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.getDictionaryData.js"></script>
+<style type="text/css">
+.history-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+.page-content .select{padding-left:24px;height:60px;line-height:60px;}
+table.single-table{width:100%;margin-top:24px;border:solid #ccc; border-width:1px 0px 0px 1px;text-align:center;}
+table.single-table td{border:solid #ccc; border-width:0px 1px 1px 0px;line-height:30px;}
+table.single-table td.ensure input{padding:0;height:20px;line-height:20px;text-indent:3px;margin-right:5px;}
+table.single-table td.ensure a{display:inline-block;width:60px;height:24px;line-height:24px;background:#01a06a;color:#fff;text-align:center;}
+table.single-table td.ensure a:hover{background:#018659;}
+table.single-table td.send a,table.single-table td.chonse-store a{display:inline-block;padding:0 12px;background:#01a06a;color:#fff;height:24px;line-height:24px;text-align:center;}
+table.single-table td.send a:hover,table.single-table td.chonse-store a:hover{background:#018659;}
+.page-editor-panel{position:relative;}
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	listUrl = "../../../manualSale/showManualSaleList.do",
+	queryCityAreaUrl="../../../org/findDistrictListByCityId.do",
+	queryStoreUrl="../../../org/findStoreListByDistrictId.do",
+	deleteUrl="../../../manualSale/cancelVerificationManualSale.do",
+	detailUrl="../../../manualSale/getOrderInfoByOrder.do";
+	
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				var postData={manualSaleId:addend8($("#fastQueryText").val()),districtId:"",storeId:""};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			},
+			advancedSearch:function(){
+				var postData={};
+				var manualSaleId=addend8($("#searchSingle").val());
+				var districtId=$("#searchCityArea").data("chosen").selectedItem();
+				districtId=districtId?districtId["value"]:"";
+				var storeId=$("#searchStore").data("chosen").selectedItem();
+				storeId=storeId?storeId["value"]:"";
+				if(storeId){
+					postData={manualSaleId:manualSaleId,districtId:"",storeId:storeId};
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+				}else if(districtId){
+					postData={manualSaleId:manualSaleId,districtId:districtId,storeId:""};
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+				}else{
+					postData={manualSaleId:manualSaleId,districtId:"",storeId:""};
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+				}
+			},
+			exportForm:function(){
+				var districtId=$("#searchCityArea").data("chosen").selectedItem();
+				districtId=districtId?districtId["value"]:"";
+				$("#districtIdForm").val(districtId);
+				var storeId=$("#searchStore").data("chosen").selectedItem();
+				storeId=storeId?storeId["value"]:"";
+				$("#storeIdForm").val(storeId);
+				$("#manualSaleIdInput").val(addend8($("#searchSingle").val()));
+				$("#searchForm").submit();
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'manualSaleId',autoWidth : true,align:"center",}, 
+			     			{name : 'billType',autoWidth : true,align : "center"},
+			     			{name : 'saleDate',width : 160,align:"center",},
+			     			{name : 'amount',width : 150,align:"center",}, 
+			     			{name : '',width : 150,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return $.fn.getDictionary("saleStatus",arg3.saleStatus);
+			     			}}, 
+			     			{name:'',autoWidth : true,align:"center",
+			     				formatter:function(arg1,arg2,arg3){
+	 			     				return '<button class="wj-jqgrid-button" onclick="detailButton(\''+arg3.billNo+'\')">查看</button>'}	
+			     			},
+			     			{name:'',autoWidth : true,align:"center",
+			     				formatter:function(arg1,arg2,arg3){
+			     					if(arg3.saleStatus==3||arg3.saleStatus==4||arg3.verifyState=="Y"){
+			     						return '<button class="wj-jqgrid-button-disabled" disabled >确认核销</button>';
+			     					}else{
+			     						return '<button class="wj-jqgrid-button" onclick="deleteButton(\''+arg3.manualSaleId+'\')">确认核销</button>';
+			     						}
+			     					}
+			     			}
+			     			], 
+			     			_colNames = ['','手工单号', '支付方式', '交易日期','销售金额','手工单状态','商品明细','操作'];
+		var cityId=sessionStorage.getItem("cityId");
+// 		$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:{storeId:storeId}}).hideCol("somecol").trigger("reloadGrid"); 
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId,postData:{cityId:cityId}}));
+		resizeFun();
+		//初始化搜索下拉框
+		initSearchSelect();
+	});
+	/*****初始化搜索下拉框*****/
+	function initSearchSelect(){
+		var cityId=sessionStorage.getItem("cityId");//
+		POST(queryCityAreaUrl,JSON.stringify({cityId:cityId}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			//填充区域
+			var result=result.rows;
+			for(var i in result){
+				result[i]={value:result[i].districtId,text:result[i].districtName};
+			}
+			result.unshift({value:"",text:"请选择城区"});
+			$("#searchCityArea").data("chosen")._clearOptions();
+			$("#searchCityArea").data("chosen")._addOptions(result);
+			$("#searchCityArea").unbind("change").bind("change",function(){
+				//查询区域下的城市
+				var districtId=$("#searchCityArea").data("chosen").selectedItem();
+				if(districtId){
+					districtId=districtId["value"];
+					$(this).parent().next().find("select[data-xtype='chosen']").data("chosen")._enabled();
+				}else{
+					$(this).parent().next().find("select[data-xtype='chosen']").data("chosen")._disabled();
+					$(this).parent().next().find("select[data-xtype='chosen']").data("chosen")._clearOptions();
+					return;
+				}
+				POST(queryStoreUrl,JSON.stringify({districtId:districtId}),function(result){
+					if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+						window.message({title:"提示信息",text: result.rspMsg});
+						return;
+					}
+					var result=result.rows;
+					for(i in result){
+						result[i]={text:result[i].storeName,value:result[i].storeId};
+					}
+					$("#searchStore").data("chosen")._clearOptions();
+					$("#searchStore").data("chosen")._addOptions(result);
+				});
+			});
+		});
+	}
+	/******点击查看****/
+	function detailButton(billNo){
+		showSlidePanel(".single-detail-look-panel",function(){
+				singleDetailCallBack(billNo)
+		});
+// 		showSlidePanel(".single-detail-look-panel",function(){
+			
+// 		});
+// 		POST(detailUrl,JSON.stringify({orderCode:manualSaleId}),function(result){
+			
+// 		});
+	}
+	function singleDetailCallBack(billNo){
+		listId="#singleDetail";
+		pagerId="#singleDetailPage";
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     		    {name : 'styleId',autoWidth : true,align:"center",}, 
+			     			{name : 'styleName',autoWidth : true,align : "center"},
+			     			{name : 'qry',autoWidth : true,align:"center",},
+			     			{name : 'amount',autoWidth : true,align:"center",}, 
+			     			];
+			     			_colNames = [ '','款号', '商品名称', '数量', '金额'];
+	   window.$tlist=	 $(listId).jqGrid($.extend(defaultGridOpts, {url: detailUrl,colNames : _colNames,colModel : _colModel,pager:pagerId,postData:{billNo :billNo}}));
+	   var $hpanel=$(".single-detail-look-panel .page-inner-content"),w=$hpanel.width()-14,h=$(".page-content").height()-$(".title-bar").height()-42;
+  	  	$tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+  	  	$("#singleDetailBack").unbind('click').bind('click',function(){
+  	  		hideSlidePanel(".single-detail-look-panel");
+	  	  	listId = "#list2";
+	  		pagerId = '#pager2'; 
+  	  	});
+	}
+	/****点击核销*****/
+	function deleteButton(manualSaleId){
+		window.message({
+			text : "确认要核销所选择的这条记录吗?",
+			title : "提醒",
+			buttons : {
+				"确认" : function() {
+					window.top.$(this).dialog("close");
+					POST(deleteUrl,JSON.stringify({manualSaleId:manualSaleId}),function(result){
+						if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+							window.message({title:"提示信息",text: result.rspMsg});
+							return;
+						}
+						$(listId).trigger("reloadGrid");
+					});
+				},
+				"取消" : function() {
+					window.top.$(this).dialog("close");
+				}
+			}
+		});
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var postData={manualSaleId:addend8($("#fastQueryText").val()),districtId:"",storeId:""};
+			$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	    }
+	}
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        var postData={};
+			var manualSaleId=addend8($("#searchSingle").val());
+			var districtId=$("#searchCityArea").data("chosen").selectedItem();
+			districtId=districtId?districtId["value"]:"";
+			var storeId=$("#searchStore").data("chosen").selectedItem();
+			storeId=storeId?storeId["value"]:"";
+			if(storeId){
+				postData={manualSaleId:manualSaleId,districtId:"",storeId:storeId};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			}else if(districtId){
+				postData={manualSaleId:manualSaleId,districtId:districtId,storeId:""};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			}else{
+				postData={manualSaleId:manualSaleId,districtId:"",storeId:""};
+				$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+			} 
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<form id="searchForm" action="http://10.0.17.20:8091/export/export/exportFile.action" method="post">
+						<input name="fileName" type="hidden" value="oss/findManualSale.xlsx" />
+    					<input name="componentName" type="hidden" value="findManualSale" />
+						<table cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td style="padding-left: 30px;text-align:right;">城区：
+    								<input type="hidden" name="districtId" id="districtIdForm"/>
+									<select data-xtype="chosen" id="searchCityArea" style="width:180px;">
+									</select>
+								</td>
+								<td style="padding-left: 30px;text-align:right;">门店：
+									<input type="hidden" name="storeId" id="storeIdForm"/>
+									<select data-xtype="chosen" id="searchStore" style="width:180px;">
+									</select>
+								</td>
+								<input type="hidden"  name="manualSaleId" id="manualSaleIdInput"/>
+								<td style="padding-left: 30px;text-align:right;">手工单号：<input  onkeydown="return keyLogins(event)" id="searchSingle" type="text"/></td>
+								<td style="padding-left: 30px;">
+<!-- 									<button type="button" id="singleWrite">手工单录入</button> -->
+									<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+									<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+								</td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0"
+					border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td class="buttons" ><button id="exportForm"><i class="fa fa-paperclip"></i>导出</button></td>
+<!-- 						<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 							id="fastQueryText" xdata-type="text" placeholder="输入手工单号查询" onkeydown="return keyLogin(event)" -->
+<!-- 							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<div class="single-detail-look-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="singleDetailBack"><i class="fa fa-hand-o-left"></i>返回</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content" style="padding:0px;">
+				<table id="singleDetail"></table>
+				<div id="singleDetailPage"></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

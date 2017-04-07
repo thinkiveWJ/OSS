@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.treeview.css" rel="stylesheet" />
+<link href="../../../theme/default/page.personManagement.css" rel="stylesheet" />
+<link href="../../../theme/default/page.members.css" rel="stylesheet" />
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<link rel="stylesheet" href="../../../theme/default/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="../../../js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="../../../js/jquery.ztree.excheck.js"></script>
+<style>
+</style>
+<script type="text/javascript">
+	var listId = "#list2", exportKey="brand",
+	editorFormId = "#editorForm", 
+	pagerId = '#pager2', 
+	loadUrl = "../../../masterdata/brand.do?command=load", 
+	deleteUrl = "../../../masterdata/brand.do?command=delete", 
+	saveUrl = "../../../masterdata/brand.do?command=submit", 
+	listUrl = "../../../masterdata/brand.do?command=search";
+
+	$(function() {
+		_initButtons();//from page.common.js
+		_initFormControls();//from page.common.js
+		_initValidateForXTypeForm(editorFormId);
+		$(".search-panel").show().data("show", true);
+		//动态显示新老会员
+		var str=
+			'<div class="new-old-members" style="margin-left:300px;position:absolute;top:0px;width:200px;"><div class="levelC left"><div class="members-content-title">'+
+			'<div class="members-content-left left">新会员</div><div class="members-content-right left">75.00%</div><div class="clearfix"></div>'+
+			'</div><div class="members-content-detail"><div class="members-content-left left">会员数</div><div class="members-content-right left">'+
+			'75</div><div class="clearfix"></div><div class="dotted"></div></div><div class="tree-split-first"></div><div class="clearfix"></div>'+
+			'</div><div class="levelC left"><div class="members-content-title"><div class="members-content-left left">老会员</div>'+
+			'<div class="members-content-right left">25.00%</div><div class="clearfix"></div></div><div class="members-content-detail">'+
+			'<div class="members-content-left left">会员数</div><div class="members-content-right left">25</div><div class="clearfix"></div>'+
+			'<div class="dotted"></div></div><div class="tree-split"></div><div class="clearfix"></div></div></div>';
+		$(".all-members-content").click(function(){
+			$(this).append(str).siblings().find(".new-old-members").remove();
+		});
+	});
+</script>
+</head>
+<body><form id="exportExcelForm" method="post"><input type="hidden" name="data"/></form>
+	<div class="page-list-panel">
+		<div class="t-content-panel">
+			<div class="head-panel" style="border-bottom:1px solid #ccc;margin:12px 0 0 0">
+				<div class="search-panel">
+					<div class="form-panel">
+						<form id="searchForm">
+							<table cellpadding="0" cellspacing="0" border="0">
+								<tr>
+									<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+									<td style="padding-left: 24px; padding-right: 5px;">选择区间：</td>
+									<td>
+										<select data-xtype="chosen" name="dateRang" style="width:170px;">
+											<option value="0">请选择</option>
+											<option>30天</option>
+											<option>60天</option>
+											<option>90天</option>
+										</select>
+									</td>
+									<td style="padding-left: 12px;">统计截止时间：</td>
+									<td>2015-23-12</td>
+									<td style="padding-left: 12px;"><button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button></td>
+								</tr>						
+							</table>
+						</form>
+					</div>
+				</div>
+			</div>
+			<!-- 全体会员内容 -->
+			<div class="all-members-panel">
+				<!-- 第一列 -->
+				<div class="levelA left">
+					<div class="members-content-title">
+						<div class="members-content-left left">全体会员</div>
+						<div class="members-content-right left">100%</div>
+						<div class="clearfix"></div>
+					</div>
+					<div class="members-content-detail">
+						<div class="members-content-left left">会员数</div>
+						<div class="members-content-right left">10</div>
+						<div class="clearfix"></div>
+						<div class="dotted"></div>
+					</div>
+				</div>
+				<!-- 第二列 -->
+				<div style="width:200px;" class="left">
+					<!-- 1 -->
+					<div class="all-members-content levelB left">
+						<div class="members-content-title">
+							<div class="members-content-left left">R&nbsp;&lt;&nbsp;60天</div>
+							<div class="members-content-right left">75.00%</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="members-content-detail">
+							<div class="members-content-left left">会员数</div>
+							<div class="members-content-right left">10</div>
+							<div class="clearfix"></div>
+							<div class="dotted"></div>
+						</div>
+						<!-- 线 -->
+						<div class="tree-split-first"></div>
+						<div class="clearfix"></div>
+						<!-- 新老会员分组 -->
+						<div style="margin-left:300px;position:absolute;top:0px;width:200px;" class="new-old-members">
+							<!-- 1 -->
+							<div class="levelC left">
+								<div class="members-content-title">
+									<div class="members-content-left left">新会员</div>
+									<div class="members-content-right left">75.00%</div>
+									<div class="clearfix"></div>
+								</div>
+								<div class="members-content-detail">
+									<div class="members-content-left left">会员数</div>
+									<div class="members-content-right left">75</div>
+									<div class="clearfix"></div>
+									<div class="dotted"></div>
+								</div>
+								<!-- 线 -->
+								<div class="tree-split-first"></div>
+								<div class="clearfix"></div>
+							</div>
+							<div class="levelC left">
+								<div class="members-content-title">
+									<div class="members-content-left left">老会员</div>
+									<div class="members-content-right left">25.00%</div>
+									<div class="clearfix"></div>
+								</div>
+								<div class="members-content-detail">
+									<div class="members-content-left left">会员数</div>
+									<div class="members-content-right left">25</div>
+									<div class="clearfix"></div>
+									<div class="dotted"></div>
+								</div>
+								<!-- 线 -->
+								<div class="tree-split"></div>
+								<div class="clearfix"></div>
+							</div>
+						</div>
+					</div>
+					<!-- 2 -->
+					<div class="all-members-content levelB left">
+						<div class="members-content-title">
+							<div class="members-content-left left">R&nbsp;&lt;&nbsp;90天</div>
+							<div class="members-content-right left">75.00%</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="members-content-detail">
+							<div class="members-content-left left">会员数</div>
+							<div class="members-content-right left">10</div>
+							<div class="clearfix"></div>
+							<div class="dotted"></div>
+						</div>
+						<!-- 线 -->
+						<div class="tree-split"></div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

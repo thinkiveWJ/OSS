@@ -1,0 +1,25 @@
+﻿{
+"success":true,
+"userId":"n-234ab234-cd232-cb23a-23cbf",
+"displayName":"New Breach",
+"userName":"newbreach",
+"userIcon":"theme/default/images/u_m.png",
+"otherUsers":[
+{
+"userId":"d-234ab234-cd232-cb23a-23cbf",
+"displayName":"Dreamer",
+"userName":"dreamer",
+"userIcon":"theme/default/images/u_w.png"
+},{
+"userId":"g-234ab234-cd232-cb23a-23cbf",
+"displayName":"Guoqing.wang",
+"userName":"wgq",
+"userIcon":"theme/default/images/u_w.png"
+},{
+"userId":"q-234ab234-cd232-cb23a-23cbf",
+"displayName":"Qunpeng.li",
+"userName":"lqp",
+"userIcon":"theme/default/images/u_m.png"
+}
+]
+}

@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<!-- <link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/> -->
+<link href="../../../theme/default/page.members.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.getDictionaryData.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadPic.js"></script>
+<script>
+	var listId = "#list2",
+		pagerId = '#pager2', 
+		queryAreaUrl="../../../org/findAllTheRegion.do",
+		queryCityUrl="../../../org/findCityListByRegionId.do",
+		queryLabelListUrl="../../../tag/findTagList.do",
+		queryLabelNameUrl="../../../tag/findTagListByName.do",
+		querySexUrl="../../../param/findGenderList.do",
+		deleteCusUrl="../../../customer/updateCustStatus.do",
+		listUrl="../../../customer/findCusList.do";
+	$(function(){
+		_initButtons({
+			advancedSearch: advancedSearchFunc,
+			chooseLabelBTN:function(){
+				//点击会员标签
+				showSlidePanel(".first-choose",function(){
+					chooseLabelFunc();
+				});
+			},
+			chooseLabelSave: chooseLabelSaveFunc,
+			chooseLabelCancel:function(){
+				hideSlidePanel(".first-choose");
+			},
+			editCancel:function(){
+				hideSlidePanel(".page-edit-panel",function(){
+					listId = "#list2";
+					pagerId = '#pager2';
+					$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData: {}}).hideCol("somecol").trigger("reloadGrid"); 
+				});
+			},
+			editIntegralChange:function(){
+				$(".member-list-integral").dialog({
+					width:800,
+					height:500,
+					modal:true,
+					buttons:[
+					        {
+					        	text:"保存",
+					        	click:function(){
+					        		
+					        	}
+					        },{
+					        	text:"取消",
+					        	click:function(){
+					        		$(this).dialog("close");
+					        	}
+					        }
+					        ]
+				});
+			}
+		});
+		_initFormControls();//from page.common.js
+		//初始化页面数据
+		initFunc();
+		//搜索框内容
+		searchFunc();
+		//区域城市下拉框
+		initAreaSearchSelect();
+	});
+	/*************初始化页面数据********/
+	function initFunc(){
+		$("#chooseLabelBTN").data("tagListVal",[]);
+		$("#chooseLabelBTN").attr("title","");
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'city',autoWidth : true,align:"center"}, 
+			     			{name : 'custName',autoWidth : true,align : "center"},
+			     			{name : 'mobile',autoWidth : true,align:"center"},
+			     			{name : 'sex',autoWidth : true,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return $.fn.getDictionary("gender",arg3.sex);
+			     			}}, 
+			     			{name : 'totalPoint',autoWidth : true,align : "center"},
+			     			{name : 'totalAmount',autoWidth : true,align : "center"},
+			     			{name : 'totalCount',autoWidth : true,align:"center"}, 
+			     			{name : 'avgAmount',autoWidth : true,align : "center"},
+			     			{name : 'billDate',autoWidth : true,align:"center"},
+			     			{name : '',autoWidth : true,align : "center",formatter:function(arg1,arg2,arg3){
+				     				if(arg3.custStatus==3){
+				     					return '<button class="wj-jqgrid-button-disabled">编辑</button>'+
+				     					'<button class="wj-jqgrid-button" style="margin-left:15px;" onclick="banButton(\''+arg3.custId+'\',\''+arg3.custStatus+'\')">启用</button>';
+				     				}
+			     					return '<button class="wj-jqgrid-button" onclick="editButton(\''+arg3.custId+'\',\''+arg3.custStatus+'\')">编辑</button>'+
+			     							'<button class="wj-jqgrid-button" onclick="banButton(\''+arg3.custId+'\',\''+arg3.custStatus+'\')">禁用</button>';
+			     				}
+			     			}
+			     			], 
+			     			_colNames = ['', '城市', '会员名称','手机号码', '性别','总积分','交易额','交易笔数','平均客单价','上次交易时间','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+		//初始化性别
+		POST(querySexUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result['rows'];
+			for(var i in result){
+				result[i]={text: result[i]['genderName'],value: result[i]['gender']};
+			}
+			result.unshift({text:"请选择性别",value:""});
+			$("#sexSearch").data("chosen")._clearOptions();
+			$("#sexSearch").data("chosen")._addOptions(result);
+		});
+		//初始化会员标签
+		POST(queryLabelListUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows,
+				str="";
+			for(var i in result){
+				str+="<a name='"+result[i]['tagId']+"'>"+result[i]['tagName']+"</a>";
+			}
+			$(".chosee-content-box").html(str);
+		});
+		//根据标签名搜索标签
+		$(".choose-search-btn").unbind('click').bind('click',function(){
+			var tagName=$(".choose-search.right input[type='text']").val(),
+				_vthis=this;
+			POST(queryLabelNameUrl,JSON.stringify({tagName: tagName}),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				var str="",
+					result=result['rows'],
+					aLenArr=[];
+				var $a=$(_vthis).parents(".choose-label").find(".chosee-selected-box a"),
+					aLen=$a.length;
+				for(var j=0;j<aLen;j++){
+					aLenArr.push($a.eq(j).attr("name"));
+				}
+				for(var i in result){
+					var tagId=result[i]['tagId'];
+					var index=$.inArray(tagId,aLenArr);
+					if(index>-1){
+						str+="<a name='"+result[i]['tagId']+"' class='on'>"+result[i]['tagName']+"</a>";
+					}else{
+						str+="<a name='"+result[i]['tagId']+"'>"+result[i]['tagName']+"</a>";
+					}
+				}
+				$(_vthis).parents(".choose-content").find(".chosee-content-box").html(str);
+				chooseLabelFunc();
+				editLabelFunc();
+			});
+		});
+	}
+	/******搜索框内容****/
+	function searchFunc(){
+		$("#startDateSearch").datepicker({
+			changeMonth: true,
+		    changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#endDateSearch" ).datepicker( "option", "minDate", selectedDate );
+		      }
+		});
+		$("#endDateSearch").datepicker({
+			changeMonth: true,
+		    changeYear: true,
+			onClose: function( selectedDate ) {
+		        $( "#startDateSearch" ).datepicker( "option", "maxDate", selectedDate );
+		      }
+		});
+	}
+	 /******初始化城市区域城区门店的下拉列表***/
+	function initAreaSearchSelect(){
+		POST(queryAreaUrl,JSON.stringify({}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			var result=result.rows;
+			var str="";areaName="",areaId="";
+			for(var i in result){
+				areaName=result[i].regionName;
+				areaId=result[i].regionId;
+				result[i]={text:areaName,value:areaId};
+			}
+			result.unshift({text:"请选择区域",value:""});
+			$("#areaSearch").data("chosen")._clearOptions();
+			$("#areaSearch").data("chosen")._addOptions(result);
+			$("#areaSearch").unbind("change").bind("change",function(){
+				var regionId=$("#areaSearch").data("chosen").selectedItem();
+				if(regionId){
+					regionId=regionId["value"];
+					$("#citySearch").data("chosen")._enabled();
+				}else{
+					$("#citySearch").data("chosen")._disabled();
+					$("#citySearch").data("chosen")._clearOptions();
+					return;
+				}
+				POST(queryCityUrl,JSON.stringify({regionId:regionId}),function(result){
+					if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+						window.message({title:"提示信息",text: result.rspMsg});
+						return;
+					}
+					initCity(result);
+				});
+			});
+		});
+	}
+	/*****根据区域id选择城市****/
+	function initCity(result){
+		var result=result.rows;
+		var str="";cityName="",cityId="";
+		for(var i in result){
+			cityName=result[i].cityName;
+			cityId=result[i].cityId;
+			result[i]={text:cityName,value:cityId};
+		}
+		result.unshift({text:"请选择城市",value:""});
+		$("#citySearch").data("chosen")._clearOptions();
+		$("#citySearch").data("chosen")._addOptions(result);
+	}
+	/******点击选择会员时候的方法********/
+	function chooseLabelFunc(){
+		//删除标签
+		$(".first-choose .chosee-selected-box a i").unbind('click').bind('click',function(){
+			$(this).parent("a.on").remove();
+			var name=$(this).parent("a.on").attr("name");
+			$(".first-choose .chosee-content-box a[name='"+name+"']").removeClass("on");
+		});
+		//新增标签
+		$(".first-choose .chosee-content-box a").unbind('click').bind('click',function(){
+			var classFlag=$(this).hasClass("on");
+			if(!classFlag){
+				$(this).addClass("on");
+				var text=$(this).text(),
+					name=$(this).attr("name");
+				$(".first-choose .chosee-selected-box").append('<a name="'+name+'" class="on">'+text+'<i class="fa fa-times"></i></a>');
+			}else{
+				var name=$(this).attr("name");
+				$(".first-choose .chosee-content-box a[name='"+name+"']").removeClass("on");
+				$(".first-choose .chosee-selected-box a[name='"+name+"']").remove();
+			}
+			//点击选择会员时候的方法
+			chooseLabelFunc();
+		});
+	}
+	/*****点击选择会员时候的方法保存******/
+	function chooseLabelSaveFunc(){
+		var aLen=$("#choosedLabelSearch a").length,
+			aLenArr=[],
+			aLenArrVal=[];
+		for(var i=0;i<aLen;i++){
+			aLenArr.push($("#choosedLabelSearch a:eq("+i+")").attr("name"));
+			aLenArrVal.push($("#choosedLabelSearch a:eq("+i+")").text());
+		}
+		$("#chooseLabelBTN").data("tagListVal",aLenArr);
+		$("#chooseLabelBTN").attr("title",aLenArrVal);
+		hideSlidePanel(".first-choose");
+	}
+	/********点击编辑************/
+	function editButton(){
+		showSlidePanel(".page-edit-panel",function(){
+			$.fn.upLoadPicFunc("#uploadPicAdd","#uploadPicAddImg");
+			//出生日期
+			$("#birthday").datepicker({
+				changeMonth: true,
+			    changeYear: true,
+			    maxDate:new Date()
+			});
+			$("#tradeDate").datepicker({
+				changeMonth: true,
+			    changeYear: true
+			});
+			//切换标签
+			var index="";
+			$(".member-list-label li").unbind('click').bind('click',function(){
+				$(this).addClass("on").siblings().removeClass("on");
+				index=$(".member-list-label li").index(this);
+				switch(index){
+					case 1:
+						editIntegralFunc();
+						break;
+					case 2:
+						editCoupon();
+						break;
+					case 3:
+						editLabelFunc();
+						break;
+					default:
+						$("#editSave").show();
+						$("#editIntegralChange").hide(); 
+						$(".member-list-base-info").siblings(".content").hide();
+					  	$(".member-list-base-info").show();
+				}
+			});
+		});
+	}
+	/*****编辑积分****/
+	function editIntegralFunc(){
+		$(".memder-list-integral").siblings(".content").hide();
+		$(".memder-list-integral").show();
+		$("#editIntegralChange").show();
+		$("#editSave").hide();
+		$("#editLabelSave").hide();
+		listId = "#integralList";
+		pagerId = '#integralPager'; 
+		 var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'skuId',autoWidth : true,align:"center"},
+			     			{name : 'styleName',autoWidth : true,align:"center"}, 
+			     			{name : 'bigTypeName',autoWidth : true,align : "center"},
+			     			{name : 'middleTypeName',autoWidth : true,align:"center"},
+			     			{name : 'smallTypeName',autoWidth : true,align:"center"}, 
+			     			{name : 'sexName',autoWidth : true,align:"center"},
+			     			{name : 'seasonName',autoWidth : true,align:"center"},
+			     			{name:"giveCount",autoWidth : true,align:"center",editable:true}
+			     			], 
+			     			_colNames = [' ', '商品编号', '商品名称', '大类', '中类','小类','性别','季节','数量'];
+		window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,postData:{},colNames : _colNames,
+			colModel : _colModel,pager : pagerId}));
+		var $hpanel=$(".page-edit-panel .page-content .memder-list-integral"),w=$hpanel.width(),
+		$tx=$hpanel.find(".header"),$tx2=$hpanel.find(".ui-jqgrid-pager"),$tx3=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv");
+		var h=$hpanel.height()-$tx.height()-$tx2.height()-$tx3.height()-36,
+		w=$hpanel.width()-36;
+		$tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+		$("#doneTime").datepicker({
+			changeMonth: true,
+		    changeYear: true
+		});
+	}
+	/*******编辑礼券**************/
+	function editCoupon(){
+		$(".member-list-coupon").siblings(".content").hide();
+		$(".member-list-coupon").show();
+		$("#editIntegralChange").hide();
+		$("#editSave").hide();
+		$("#editLabelSave").hide();
+		listId = "#memberListCouponList";
+		pagerId = '#memberListCouponPager'; 
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'skuId',autoWidth : true,align:"center"},
+			     			{name : 'styleName',autoWidth : true,align:"center"}, 
+			     			{name : 'bigTypeName',autoWidth : true,align : "center"},
+			     			{name : 'middleTypeName',autoWidth : true,align:"center"},
+			     			{name : 'smallTypeName',autoWidth : true,align:"center"}, 
+			     			{name : 'sexName',autoWidth : true,align:"center"},
+			     			{name : 'seasonName',autoWidth : true,align:"center"},
+			     			{name:"giveCount",autoWidth : true,align:"center",editable:true}
+			     		], 
+			     			_colNames = [' ', '商品编号', '商品名称', '大类', '中类','小类','性别','季节','数量'];
+		window.$tlist=$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,postData:{},colNames : _colNames,
+			colModel : _colModel,pager : pagerId}));
+		var $hpanel=$(".page-edit-panel .page-content .member-list-coupon"),w=$hpanel.width(),
+		$tx=$hpanel.find(".header"),$tx2=$hpanel.find(".ui-jqgrid-pager"),$tx3=$hpanel.find(".ui-jqgrid-view .ui-jqgrid-hdiv");
+		var h=$hpanel.height()-$tx.height()-$tx2.height()-$tx3.height()-36,
+		w=$hpanel.width()-36;
+		$tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+	}
+	/********标签标记*************/
+	function editLabelFunc(){
+		$(".member-list-label-edit").siblings(".content").hide();
+		$(".member-list-label-edit").show();
+		$("#editIntegralChange").hide();
+		$("#editSave").hide();
+		$("#editLabelSave").show();
+		//删除标签
+		$(".member-list-label-edit .chosee-selected-box a i").unbind('click').bind('click',function(){
+			$(this).parent("a.on").remove();
+			var name=$(this).parent("a.on").attr("name");
+			$(".member-list-label-edit .chosee-content-box a[name='"+name+"']").removeClass("on");
+			var len=$(".member-list-label-edit .chosee-selected-box a").length;
+			$("#editLabelSelected span").text(len);
+		});
+		//新增标签
+		$(".member-list-label-edit .chosee-content-box a").unbind('click').bind('click',function(){
+			var classFlag=$(this).hasClass("on");
+			if(!classFlag){
+				$(this).addClass("on");
+				var text=$(this).text(),
+					name=$(this).attr("name");
+				$(".member-list-label-edit .chosee-selected-box").append('<a name="'+name+'" class="on">'+text+'<i class="fa fa-times"></i></a>');
+				var len=$(".member-list-label-edit .chosee-selected-box a").length;
+				$("#editLabelSelected span").text(len);
+			}else{
+				var name=$(this).attr("name");
+				$(".member-list-label-edit .chosee-content-box a[name='"+name+"']").removeClass("on");
+				$(".member-list-label-edit .chosee-selected-box a[name='"+name+"']").remove();
+				var len=$(".member-list-label-edit .chosee-selected-box a").length;
+				$("#editLabelSelected span").text(len);
+			}
+			//点击选择会员时候的方法
+			editLabelFunc();
+		});
+	}
+	
+	/*****多条件搜索*******/
+	function advancedSearchFunc(){
+		var postData={};
+		var regionId=$("#areaSearch").data("chosen").selectedItem(),
+			regionId=regionId?regionId['value']:"",
+			cityId=$("#citySearch").data("chosen").selectedItem(),
+			cityId=cityId?cityId['value']:'',
+			custName=$("#custNameSearch").val(),
+			custLevel=$("#custLevelSearch").val(),
+			avgPriceFrom=$("#avgPriceFromSearch").val(),
+			avgPriceTo=$("#avgPriceToSearch").val(),
+			paySumFrom=$("#paySumFromSearch").val(),
+			paySumTo=$("#paySumToSearch").val(),
+			PayMoneyFrom=$("#PayMoneyFromSearch").val(),
+			PayMoneyTo=$("#PayMoneyToSearch").val(),
+			pointFrom=$("#pointFromSearch").val(),
+			pointTo=$("#pointToSearch").val(),
+			lastPayTimeFrom=$("#startDateSearch").val(),
+			lastPayTimeTo=$("#endDateSearch").val(),
+			mobile=$("#mobileSearch").val(),
+			sex=$("#sexSearch").data("chosen").selectedItem(),
+			sex=sex?sex['value']:"",
+			tagList=$("#chooseLabelBTN").data("tagListVal");
+		postData={regionId: regionId,cityId: cityId,custName: custName,custLevel: custLevel,avgPriceFrom: avgPriceFrom,avgPriceTo: avgPriceTo,
+				paySumFrom: paySumFrom,paySumTo: paySumTo,payMoneyFrom: PayMoneyFrom,payMoneyTo: PayMoneyTo,pointFrom: pointFrom,pointTo: pointTo,
+				lastPayTimeFrom: lastPayTimeFrom,lastPayTimeTo: lastPayTimeTo,tagList: tagList,mobile: mobile,sex: sex};
+		$(listId).jqGrid("setGridParam", {page:1,url : listUrl,postData:postData}).hideCol("somecol").trigger("reloadGrid"); 
+	}
+	/***禁用******/
+	function banButton(custId,custStatus){
+		POST(deleteCusUrl,JSON.stringify({custId: custId,custStatus: custStatus}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			$(listId).trigger("reloadGrid"); 
+		});
+	}
+	function keyLogins(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+			advancedSearchFunc();
+	    }
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+					<table cellpadding="0" cellspacing="0" border="0">
+						<tr>
+							<td style="text-align:right;padding-left:30px;">区域/城市：</td>
+							<td>
+								<select data-xtype="chosen" id="areaSearch" style="width:208px;"></select>
+								<select data-xtype="chosen" id="citySearch" style="width:208px;"></select>
+							</td>
+							<td style="text-align:right;padding-left:30px;">性别：</td>
+							<td><select data-xtype="chosen" id="sexSearch" style="width:208px;"></select></td>
+							<td style="padding-left:12px;">
+								<button type="button" id="advancedSearch"><i class="fa fa-search"></i>查询</button>
+								<button type="button" id="searchRipClose" title="点击收起查询面板"><i class="fa  fa-angle-down" style="margin-right:0px;"></i></button>
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align:right;padding-left:30px;">平均客单价：</td>
+							<td><input id="avgPriceFromSearch" onkeydown="return keyLogins(event)"/>&nbsp;-&nbsp;<input id="avgPriceToSearch" onkeydown="return keyLogins(event)"/></td>
+							<td style="text-align:right;padding-left:30px;">手机号码：</td>
+							<td><input type="text" id="mobileSearch" onkeydown="return keyLogins(event)"/></td>
+						</tr>
+						<tr>
+							<td style="text-align:right;padding-left:30px;">交易笔数：</td>
+							<td><input id="paySumFromSearch" onkeydown="return keyLogins(event)"/>&nbsp;-&nbsp;<input id="paySumToSearch" onkeydown="return keyLogins(event)"/></td>
+							<td style="text-align:right;padding-left:30px;">会员名称：</td>
+							<td><input id="custNameSearch" type="text" onkeydown="return keyLogins(event)"/></td>
+						</tr>
+						<tr>
+							<td style="text-align:right;padding-left:30px;">交易额（元）：</td>
+							<td><input id="PayMoneyFromSearch" onkeydown="return keyLogins(event)"/>&nbsp;-&nbsp;<input id="PayMoneyToSearch" onkeydown="return keyLogins(event)"/></td>
+							<td style="text-align:right;padding-left:30px;">会员等级：</td>
+							<td><input id="custLevelSearch" onkeydown="return keyLogins(event)" type="text"/></td>
+						</tr>
+						<tr>
+							<td style="text-align:right;padding-left:30px;">会员积分：</td>
+							<td><input id="pointFromSearch" onkeydown="return keyLogins(event)"/>&nbsp;-&nbsp;<input id="pointToSearch" onkeydown="return keyLogins(event)"/></td>
+							<td style="text-align:right;padding-left:30px;">会员标签：</td>
+							<td><button type="button" id="chooseLabelBTN">选择标签</button></td>
+						</tr>
+						<tr>
+							<td style="text-align:right;padding-left:30px;">上次交易时间：</td>
+							<td><input id="startDateSearch" onkeydown="return keyLogins(event)"/>&nbsp;-&nbsp;<input id="endDateSearch" onkeydown="return keyLogins(event)"/></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+<!-- 							<td class="none" style="padding-left: 24px; padding-right: 5px;"><input -->
+<!-- 								id="fastQueryText" xdata-type="text" name="styleName" placeholder="输入姓名查询" onkeydown="return keyLogin(event)" -->
+<!-- 								style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td> -->
+						<td class="none">
+<!-- 							<button id="fastSearch" title="查询" style="margin-left:0px;"> -->
+<!-- 								<i class="fa fa-search" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+							<button id="searchRip" title="点击展开高级查询面板">
+								<i class="fa fa-angle-up" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- 选择标签模板 -->
+	<div class="page-choose-label-panel full-drop-panel first-choose">
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="chooseLabelSave"><i class="fa fa-check"></i>保存</button>
+					<button id="chooseLabelCancel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="choose-label">
+					<div class='choose-selected'>
+						<div class="choose-label-title">已选标签</div>
+						<div class="chosee-selected-box" id="choosedLabelSearch">
+<!-- 							<a name="5" class="on">啊打发5<i class="fa fa-times"></i></a> -->
+						</div>
+					</div>
+					<div class="choose-content">
+						<div class="choose-label-title">
+							<span>可选标签</span>
+							<div class="choose-search right">
+								<input placeholder="标签" type="text"/>
+								<a class="choose-search-btn"><i class="fa fa-search"></i></a>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="chosee-content-box" id="chooseLabelSearch">
+<!-- 							<a name="5" class="on">啊打发5</a> -->
+<!-- 							<a name="4">啊打发</a> -->
+<!-- 							<a name="1">啊打发1</a> -->
+<!-- 							<a name="2">啊打发2</a> -->
+<!-- 							<a name="3">啊打发3</a> -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 编辑模板 -->
+	<div class="page-edit-panel full-drop-panel page-choose-label-panel" style="position:relative;">
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="editSave"><i class="fa fa-check"></i>保存</button>
+					<button id="editIntegralChange" style="display: none">调整</button>
+					<button id="editLabelSave" style="display:none"><i class="fa fa-check"></i>保存</button>
+					<button id="editCancel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="member-list">
+					<!-- 头部标签 -->
+					<ul class="member-list-label">
+						<li class="first on"><a>基本信息</a></li>
+						<li><a>积分</a></li>
+						<li><a>礼券</a></li>
+						<li class="last"><a>标签</a></li>
+						<div class="clearfix"></div>
+					</ul>
+					<!-- 基本信息详细信息标签 -->
+					<div class="member-list-base-info content">
+						<table class="base-info-table">
+							<tr>
+								<td class="content-left">头像：</td>
+								<td style="position:relative;">
+									<img id="uploadPicAddImg" src="../../../theme/default/images/106261.png" style="width:300px;height:120px"/>
+									<input id="uploadPicAdd" type="file" style="position:absolute;top:0;left:0;width:300px;height:120px;z-index:10;cursor:pointer;opacity:0;filter:alpha(opacity=0);"/>
+								</td>
+								<td class="content-left">会员名称：</td>
+								<td><input type="text"/></td>
+							</tr>
+							<tr>
+								<td class="content-left">城市：</td>
+								<td><select data-xtype="chosen" style="width:204px;"></select></td>
+								<td class="content-left">职业：</td>
+								<td><select data-xtype="chosen" style="width:204px;"></select></td>
+							</tr>
+							<tr>
+								<td class="content-left">会员编号：</td>
+								<td><input type="text"/></td>
+								<td class="content-left">证件号码：</td>
+								<td><input type="text"/></td>
+							</tr>
+							<tr>
+								<td class="content-left">证件类型：</td>
+								<td><select data-xtype="chosen" style="width:204px;"></select></td>
+								<td class="content-left">出生日期：</td>
+								<td><input id="birthday" type="text"/></td>
+							</tr>
+							<tr>
+								<td class="content-left">会员类型：</td>
+								<td><select data-xtype="chosen" style="width:204px;"></select></td>
+								<td class="content-left">会员状态：</td>
+								<td><select data-xtype="chosen" style="width:204px;"></select></td>
+							</tr>
+							<tr>
+								<td class="content-left">性别：</td>
+								<td><select data-xtype="chosen" style="width:204px;"></select></td>
+								<td class="content-left">收货地址：</td>
+								<td><input type="text"/></td>
+							</tr>
+							<tr>
+								<td class="content-left">最近交易日期：</td>
+								<td><input id="tradeDate" type="text"/></td>
+								<td class="content-left">兴趣爱好：</td>
+								<td><input type="text"/></td>
+							</tr>
+							<tr>
+								<td class="content-left">交易金额：</td>
+								<td><input type="text"/></td>
+								<td class="content-left">交易笔数：</td>
+								<td><input type="text"/></td>
+							</tr>
+						</table>
+					</div>
+					<!-- 积分标签 -->
+					<div class="memder-list-integral content" style="position:absolute;top:80px;left:0;right:0;bottom:0;">
+						<div class="header" style="height:30px;line-height: 30px;margin:24px auto 0;text-align: center;border-bottom:1px solid #ccc;">
+							<div style="display: inline-block;">总积分：<span>1000</span></div>
+							<div style="display: inline-block;margin-left:24px;">可用积分：<span>1000</span></div>
+						</div>
+						<table id="integralList"></table>
+						<div id="integralPager"></div>
+					</div>
+					<!-- 礼券标签 -->
+					<div class="member-list-coupon content" style="position:absolute;top:80px;left:0;right:0;bottom:0;">
+						<div class="header" style="height:30px;line-height: 30px;margin:24px auto 0;text-align: center;border-bottom:1px solid #ccc;">
+							<div style="display: inline-block;">礼券总数：<span>1000</span></div>
+							<div style="display: inline-block;margin-left:24px;">未使用总数：<span>1000</span></div>
+						</div>
+						<table id="memberListCouponList"></table>
+						<div id="memberListCouponPager"></div>
+					</div>
+					<!-- 标签编辑页面 -->
+					<div class="member-list-label-edit choose-label content">
+						<div class="label-box">
+							<div class="choose-label">
+								<div class='choose-selected'>
+									<div class="choose-label-title header" id="editLabelSelected">已选标签：<span style="margin-left:12px;">10</span></div>
+									<div class="chosee-selected-box">
+<!-- 										<a name="5" class="on">啊打发5<i class="fa fa-times"></i></a> -->
+									</div>
+								</div>
+								<div class="choose-content">
+									<div class="choose-label-title">
+										<span>可选标签</span>
+										<div class="choose-search right">
+											<input placeholder="标签" type="text"/>
+											<a class="choose-search-btn"><i class="fa fa-search"></i></a>
+										</div>
+										<div class="clearfix"></div>
+									</div>
+									<div class="chosee-content-box">
+<!-- 										<a name="5" class="on">啊打发5</a> -->
+<!-- 										<a name="4">啊打发</a> -->
+<!-- 										<a name="1">啊打发1</a> -->
+<!-- 										<a name="2">啊打发2</a> -->
+<!-- 										<a name="3">啊打发3</a> -->
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 积分调整 -->
+	<div class="member-list-integral">
+		<table>
+			<tr>
+				<td>姓名：</td><td class="content-left">admin</td>
+				<td>总积分：</td><td class="content-left">2000</td>
+			</tr>
+			<tr>
+				<td>已使用积分：</td><td class="content-left">admin</td>
+				<td>当前积分：</td><td class="content-left">2000</td>
+			</tr>
+			<tr>
+				<td>类型：</td><td class="content-left"><select data-xtype="chosen" style="width:208px;"></select></td>
+				<td>积分数：</td><td class="content-left"><input type="text"/></td>
+			</tr>
+			<tr>
+				<td>备注：</td><td colspan="3" class="content-left"><textarea style="border:1px solid #ccc;width:100%;padding:3px;"></textarea></td>
+			</tr>
+			<tr>
+				<td>过期时间：</td><td class="content-left"><input id="doneTime" type="text"/></td>
+			</tr>
+		</table>
+	</div>
+</body>
+</html>

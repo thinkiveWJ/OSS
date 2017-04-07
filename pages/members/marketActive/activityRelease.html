@@ -1,0 +1,459 @@
+<!DOCTYPE>
+<html>
+	<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../../theme/default/page.members.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.getDictionaryData.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadPic.js"></script>
+
+<link href="../../../theme/default/ui.pick.css" rel="stylesheet" />
+<script type="text/javascript" src="../../../js/ui.pick.js"></script>
+
+<link rel="stylesheet" href="../../../theme/default/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="../../../js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="../../../js/jquery.ztree.excheck.js"></script>
+		<style type='text/css'>
+			.page-list-panel{overflow-x:auto;overflow-y:auto;}
+		</style>
+		<script>
+			$(function(){
+				_initButtons({
+					chooseCancelStep2:function(){
+						hideSlidePanel(".page-add-step2-choose");
+					},
+					chooseLabelCancel:function(){
+						hideSlidePanel(".page-choose-label-panel");
+					}
+				});
+				_initFormControls();//from page.common.js
+				$("#startDateStepOne").datepicker({
+					changeMonth: true,
+				    changeYear: true,
+					minDate:new Date()
+				});
+				//初始化
+				init();
+				//点击上下一步
+				bindStepBTNFunc();
+			});
+			/*****初始化*****/
+			function init(){
+				$(".ul-li-header ul li:eq(0)").addClass("on").siblings().removeClass("on");
+				$("#stepOne").show().siblings().hide();
+				$(".active-release.step-one-table").show().siblings(".active-release").hide();
+				//非会员有效时间
+				$("#memberNoEffectiveStartDate").datepicker({
+					changeMonth: true,
+				    changeYear: true,
+					onClose: function( selectedDate ) {
+				        $( "#memberNoEffectiveEndDate" ).datepicker( "option", "minDate", selectedDate );
+				      }
+				});
+				$("#memberNoEffectiveEndDate").datepicker({
+					changeMonth: true,
+				    changeYear: true,
+					onClose: function( selectedDate ) {
+				        $( "#memberNoEffectiveStartDate" ).datepicker( "option", "maxDate", selectedDate );
+				      }
+				});
+				//会员有效时间
+				$("#memberEffectiveStartDate").datepicker({
+					changeMonth: true,
+				    changeYear: true,
+					onClose: function( selectedDate ) {
+				        $( "#memberEffectiveEndDate" ).datepicker( "option", "minDate", selectedDate );
+				      }
+				});
+				$("#memberEffectiveEndDate").datepicker({
+					changeMonth: true,
+				    changeYear: true,
+					onClose: function( selectedDate ) {
+				        $( "#memberEffectiveStartDate" ).datepicker( "option", "maxDate", selectedDate );
+				      }
+				});
+				//会员与非会员的转换
+				$(".step-two-table .ul-li-buttons a.member").unbind("click").bind('click',function(){
+					$(this).addClass("on").siblings().removeClass("on");
+					var index=$(".step-two-table .ul-li-buttons a.member").index(this);
+					if(index==0){
+						$("div.member").show();
+						$("div.member-no").hide();
+					}else if(index==1){
+						$("div.member-no").show();
+						$("div.member").hide();
+					}
+				});
+				//点击选择
+				$("#activeReleaseStepTwoMemberChoose").unbind('click').bind('click',function(){
+					showSlidePanel(".page-choose-label-panel",function(){
+						//选择商品
+						$("#labelAttrGoodsChoose").focus(function(){
+							showSlidePanel(".page-add-step2-choose");
+						});
+					});
+				});
+				//删除标签
+				$(".first-choose .chosee-selected-box a i").unbind('click').bind('click',function(){
+					$(this).parent("a.on").remove();
+					var name=$(this).parent("a.on").attr("name");
+					$(".first-choose .chosee-content-box a[name='"+name+"']").removeClass("on");
+					init();
+				});
+				//新增标签
+				$(".first-choose .chosee-content-box a").unbind('click').bind('click',function(){
+					var classFlag=$(this).hasClass("on");
+					if(!classFlag){
+						$(this).addClass("on");
+						var text=$(this).text(),
+							name=$(this).attr("name");
+						$(".first-choose .chosee-selected-box").append('<a name="'+name+'" class="on">'+text+'<i class="fa fa-times"></i></a>');
+					}else{
+						var name=$(this).attr("name");
+						$(".first-choose .chosee-content-box a[name='"+name+"']").removeClass("on");
+						$(".first-choose .chosee-selected-box a[name='"+name+"']").remove();
+					}
+					init();
+				});
+			}
+			/****点击上下一步*****/
+			function bindStepBTNFunc(){
+				//点击 第一步  下一步
+				$("#stepOne").unbind('click').bind('click',function(){
+					$(this).parent(".ul-li-buttons").find("a").hide();
+					$(this).siblings(".step-two").show();
+					$(".step-two-table").show().siblings(".active-release").hide();
+					$(".ul-li-header ul li:eq(1)").addClass("on").siblings().removeClass("on");
+				});
+				//点击第二部  的上一步
+				$('#stepTwoPrev').unbind('click').bind('click',function(){
+					$(this).parent(".ul-li-buttons").find("a").hide();
+					$("#stepOne").show();
+					$(".step-one-table").show().siblings(".active-release").hide();
+					$(".ul-li-header ul li:eq(0)").addClass("on").siblings().removeClass("on");
+				});
+				//点击第二部的  下一步
+				$("#stepTwoNext").unbind('click').bind('click',function(){
+					$(this).parent(".ul-li-buttons").find("a").hide();
+					$(this).siblings(".step-three").show();
+					$(".step-three-table").show().siblings(".active-release").hide();
+					$(".ul-li-header ul li:eq(2)").addClass("on").siblings().removeClass("on");
+				});
+				//点击第三步的  完成
+				$("#stepThreeSave").unbind('click').bind('click',function(){
+					$(".ul-li-header ul li:eq(0)").addClass("on").siblings().removeClass("on");
+					$("#stepOne").show().siblings().hide();
+					$(".active-release.step-one-table").show().siblings(".active-release").hide();
+				});
+			}
+		</script>
+	</head>
+	<body>
+		<div class="page-list-panel">
+			<div class="section">
+				<div class="ul-li-header">
+					<ul class="list left">
+						<li class="on first">01编辑活动</li>
+						<li class="">02活动详情</li>
+						<li class="last">03活动确认</li>
+						<div class="clearfix"></div>
+					</ul>
+					<div class="ul-li-buttons right">
+						<a id="stepOne" class="next-step step-one">下一步</a>
+						<a id="stepTwoPrev" class="next-step step-two">上一步</a>
+						<a id="stepTwoNext" class="next-step step-two">发放</a>
+						<a id="stepThreeSave" class="next-step step-three">完成</a>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+				<!-- step01 01编辑活动-->
+				<div class="active-release step-one-table">
+					<table class="active-release-step-one">
+						<tr><td>活动名称：</td><td><input type="text"/></td></tr>
+						<tr><td>开始时间：</td><td><input id="startDateStepOne" type="text"/></td></tr>
+						<tr><td>活动描述：</td><td><textarea style="border:1px solid #ccc;"></textarea></td></tr>
+					</table>
+				</div>
+				<!-- step02  02活动详情-->
+				<div class="active-release step-two-table">
+					<div class="ul-li-buttons border-member">
+						<a class="member left">会员</a>
+						<a class="member left on">非会员</a>
+						<div class="clearfix"></div>
+					</div>
+					<!-- 会员 -->
+					<div class="member" style="display: none">
+						<table class="active-release-step-one">
+							<tr><td>发放渠道：</td><td><select data-xtype="chosen" style="width:208px;"></select></td></tr>
+							<tr>
+								<td>发放人群：</td><td><input id="" type="text"/></td>
+								<td style="text-align:center;">
+									<a id="activeReleaseStepTwoMemberChoose" style="display:inline-block;border-radius:8px;width:140px;height:50px;line-height:50px;color:#fff;background:#00a06a;">选择</a>
+								</td>
+								<td style="text-align:center;">
+									<a style="display:inline-block;border-radius:8px;width:140px;height:50px;line-height:50px;color:#fff;background:#00a06a;">清空</a>
+								</td>
+							</tr>
+							<tr>
+								<td>活动时间：</td>
+								<td><label><input name="memberEffectiveDate" type="radio"/>有效天数：<input type="text"/></label></td>
+								<td>
+									<label><input name="memberEffectiveDate" type="radio"/>
+									有效时间：<input id="memberEffectiveStartDate" type="text"/>&nbsp;-&nbsp;<input id="memberEffectiveEndDate" type="text"/>
+									</label>
+								</td>
+							</tr>
+							<tr>
+								<td>活动积分：</td>
+								<td><input type="text"/></td>
+							</tr>
+						</table>
+						<div class="member-split"><span>选择礼券</span><i></i></div>
+						<div class="ul-li-header">
+							<table class="active-release-step-one left">
+								<tr>
+									<td>礼券类型：</td>
+									<td><select data-xtype="chosen" style="width:208px;"></select></td>
+									<td>礼券名称：</td>
+									<td><input type="text"/></td>
+								</tr>
+							</table>
+							<div class="ul-li-buttons right">
+								<a id="" class="next-step">搜索</a>
+								<a id="" class="next-step">确定</a>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="active-ralease-coupon-type">
+							<div class="coupon-type-list left">
+								<label><input type="radio"/>第三方</label>
+								<label><input type="radio"/>第三方</label>
+								<label><input type="radio"/>第三方</label>
+								<label><input type="radio"/>第三方</label>
+								<label><input type="radio"/>第三方</label>
+							</div>
+							<div class="coupon-type-details left">
+								<div class="coupon-type-detail">优惠券编号：SD009128</div>
+								<div class="coupon-type-detail">优惠券名称：SD009大促销</div>
+								<div class="coupon-type-detail">有效期：2018-09-01至2019-02-01</div>
+								<div class="coupon-type-detail">优惠券内容：满200.00元减30.00元</div>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+					<!-- 非会员 -->
+					<div class="member-no">
+						<table class="active-release-step-one">
+							<tr><td>发放渠道：</td><td><select data-xtype="chosen" style="width:208px;"></select></td></tr>
+							<tr><td>发放张数：</td><td><input id="" type="text"/></td></tr>
+							<tr>
+								<td>活动时间：</td>
+								<td><label><input name="memberNoEffectiveDate" type="radio"/>有效天数：<input type="text"/></label></td>
+								<td>
+									<label><input name="memberNoEffectiveDate" type="radio"/>
+									有效时间：<input id="memberNoEffectiveStartDate" type="text"/>&nbsp;-&nbsp;<input id="memberNoEffectiveEndDate" type="text"/>
+									</label>
+								</td>
+							</tr>
+							<tr>
+								<td>活动积分：</td>
+								<td><input type="text"/></td>
+							</tr>
+						</table>
+						<div class="member-split"><span>选择礼券</span><i></i></div>
+						<div class="ul-li-header">
+							<table class="active-release-step-one left">
+								<tr>
+									<td>礼券类型：</td>
+									<td><select data-xtype="chosen" style="width:208px;"></select></td>
+									<td>礼券名称：</td>
+									<td><input type="text"/></td>
+								</tr>
+							</table>
+							<div class="ul-li-buttons right">
+								<a id="" class="next-step">搜索</a>
+								<a id="" class="next-step">确定</a>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="active-ralease-coupon-type">
+							<div class="coupon-type-list left">
+								<label><input type="radio"/>第三方</label>
+								<label><input type="radio"/>第三方</label>
+								<label><input type="radio"/>第三方</label>
+								<label><input type="radio"/>第三方</label>
+								<label><input type="radio"/>第三方</label>
+							</div>
+							<div class="coupon-type-details left">
+								<div class="coupon-type-detail">优惠券编号：SD009128</div>
+								<div class="coupon-type-detail">优惠券名称：SD009大促销</div>
+								<div class="coupon-type-detail">有效期：2018-09-01至2019-02-01</div>
+								<div class="coupon-type-detail">优惠券内容：满200.00元减30.00元</div>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+					</div>
+				</div>
+				<div class="active-release step-three-table">
+					<h1 class="head">OK！恭喜您创建活动成功</h1>
+					<div class="content">
+						<table class="active-release-step-one">
+							<tr>
+								<td>活动名称：</td><td>士大夫</td>
+								<td>优惠券名称：</td><td>士大夫</td>
+								<td>成功生产数量：</td><td>2000张</td>
+							</tr>
+							<tr>
+								<td>发布渠道：</td><td>XXXX</td>
+								<td>优惠券规则：</td><td>士大夫</td>
+								<td>成功发放总计：</td><td>2000人</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- 标签属性的选择 -->
+	<div class="page-choose-label-panel full-drop-panel first-choose">
+		<div class="title-bar step1">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="chooseLabelSave"><i class="fa fa-check"></i>保存</button>
+					<button id="chooseLabelCancel"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="choose-label">
+					<table class="label-attr">
+						<tr>
+							<td class="content-right">性别：</td><td><select data-xtype="chosen" style="width:208px;"></select></td>
+							<td class="content-right">会员积分：</td><td class="input-width"><input type="text"/>&nbsp;-&nbsp;<input type="text"/></td>
+						</tr>
+						<tr>
+							<td class="content-right">选择渠道：</td><td><select data-xtype="chosen" style="width:208px;"></select></td>
+							<td class="content-right">创建日期：</td>
+							<td class="input-width">
+								<input id="createLabelAttrStartDate" type="text"/>&nbsp;-&nbsp;<input id="createLabelAttrEndDate" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right">年龄：</td><td class="input-width"><input type="text"/>&nbsp;-&nbsp;<input type="text"/></td>
+							<td class="content-right">交易日期：</td>
+							<td class="input-width">
+								<input id="tradeLabelAttrStartDate" type="text"/>&nbsp;-&nbsp;<input id="tradeLabelAttrEndDate" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right">交易门店：</td>
+							<td>
+								<select data-xtype="chosen" style="width:100px;"></select>
+								<select data-xtype="chosen" style="width:100px;"></select>
+								<select data-xtype="chosen" style="width:100px;"></select>
+							</td>
+							<td class="content-right">交易金额：</td>
+							<td class="input-width">
+								<input id="" type="text"/>&nbsp;-&nbsp;<input id="" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right">商品选择：</td>
+							<td>
+								<input type="text" id="labelAttrGoodsChoose" placeholder="请选择商品" readonly/>
+							</td>
+							<td class="content-right">交易次数：</td>
+							<td class="input-width">
+								<input id="" type="text"/>&nbsp;-&nbsp;<input id="" type="text"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="content-right"></td>
+							<td></td>
+							<td class="content-right">平均客单价：</td>
+							<td class="input-width">
+								<input id="" type="text"/>&nbsp;-&nbsp;<input id="" type="text"/>
+							</td>
+						</tr>
+					</table>
+					<div class='choose-selected'>
+						<div class="choose-label-title">已选标签</div>
+						<div class="chosee-selected-box"><a name="5" class="on">啊打发5<i class="fa fa-times"></i></a></div>
+					</div>
+					<div class="choose-content">
+						<div class="choose-label-title">
+							<span>已选标签</span>
+							<div class="choose-search right">
+								<input placeholder="标签" type="text"/>
+								<a class="choose-search-btn"><i class="fa fa-search"></i></a>
+							</div>
+							<div class="clearfix"></div>
+						</div>
+						<div class="chosee-content-box">
+							<a name="5" class="on">啊打发5</a>
+							<a name="4">啊打发</a>
+							<a name="1">啊打发1</a>
+							<a name="2">啊打发2</a>
+							<a name="3">啊打发3</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 标签属性的选择 新建 选择商品  -->
+	<div class="page-add-step2-choose full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;position:relative;">
+					<button id="chooseImportStep2"><i class="fa fa-pencil"></i>导入
+						<form action="../../file/itemUpload.do" id="uploadStep2Form" enctype="multipart/form-data;" method="post" onsubmit="return saveReport();">
+							<input name="itemFile" id="uploadStep2" type="file" style="position:absolute;left:0px;top:0;bottom:0;right:0px;opacity:0;filter:Alpha(opacity=0);cursor:pointer;"/>
+							<input name="uploadInpFileName" id="uploadStep2Name" type="hidden"/>
+							<input name="promotionID" id="promotionIDUpload" type="hidden"/>
+							<input name="isGiveGoods" value="1" type="hidden"/>
+						</form>
+					</button>
+					<button id="chooseSaveStep2"><i class="fa fa-check"></i>保存</button>
+					<button id="chooseCancelStep2"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<!-- 选择购买内容 -->
+		<div class="page-content">
+			<div class="choose-setp2-content choose-setp2-content2">
+				<div class="choose-content-head"></div>
+				<table class="choose-content-condition" style="width:100%;border:1px solid #ccc">
+					<tr>
+						<td>选择范围：
+							<input data-url="./pages/members/marketActive/goodsLeftTree.html" id="goodsEffectRang" data-xtype="pick"  data-dialogWidth="600" data-dialogHeight="400" style="width:152px;"  name="jde"/>
+						</td>
+					</tr>
+				</table>
+				<table id="chooseTableStep2"></table>
+				<div id="choosePageStep2"></div>
+			</div>
+		</div>
+	</div>
+	</body>
+</html>

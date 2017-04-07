@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.storeManagement.css" rel="stylesheet"/>
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.uploadfile.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<style type="text/css">
+.history-panel .ui-jqgrid{
+	left:0px;
+	border-top-width:0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+}
+table.page-add-content {   border-collapse:   separate;   border-spacing:   24px;   } 
+</style>
+<script type="text/javascript">
+var listId = "#list2",
+	pagerId = '#pager2', 
+	firstFlag=true;
+	loadUrl = "../../../posMachineInfo/findStoreInfoList.do",
+	queryPosMaintainUrl="../../../posMachineInfo/findPosMachineInfoList.do";
+	
+	$(function() {
+		_initButtons({
+			backBTN:function(){
+				hideSlidePanel('.pos-maintain-panel',function(){
+					listId = "#list2";
+					pagerId = '#pager2';
+					$(listId).trigger("reloadGrid");
+				});
+			},
+			fastSearch:function(){
+				$(listId).jqGrid("setGridParam",{url:loadUrl,postData:{storeName:$("#fastQueryText").val()}}).hideCol("someCol").trigger("reloadGrid");
+			}
+		});//from page.common.js
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     			{name : 'regionName',autoWidth : true,align:"center"}, 
+			     			{name : 'cityName',autoWidth : true,align:"center"},
+			     			{name : 'districtName',autoWidth : true,align:"center"}, 
+			     			{name : 'storeName',autoWidth : true,align : "center"},
+			     			{name : 'storeAddr',autoWidth : true,align : "center"},
+			     			{name : 'phone',autoWidth : true,align:"center"},
+			     			{name : '',autoWidth : true,align:"center"}, 
+			     			{name : '',autoWidth : true,align : "center",
+			     				formatter:function(ar1,ar2,ar3){
+			    					return '<button class="wj-jqgrid-button" onclick="posMaintain(\''+ar3.storeId+'\')">POS机维护</button>';
+			    				}}
+			     			], 
+
+			     			_colNames = [' ','区域', '城市', '城区', '门店名称', '门店地址','联系电话','门店经纬度','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url:loadUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+	});
+	/*******点击pos维护**********/
+	function posMaintain(storeId){
+		showSlidePanel(".pos-maintain-panel",function(){
+			initHistoryGrid(storeId);
+		});
+	}
+	
+	/*****搜索内容 ****/
+	function initHistoryGrid(storeId){
+		listId="#posSearchResult";
+		pagerId="#page3"
+		if(firstFlag!=true){
+			$(listId).jqGrid("setGridParam",{url:queryPosMaintainUrl,postData:{storeId:storeId}}).hideCol("someCol").trigger("reloadGrid");
+			return;
+		}
+		firstFlag=false;
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+			     		    {name : 'posCode',width : 200,align:"center"},
+			     			{name : 'posSwitch',width : 200,align:"center"},
+			     			{name : 'ONLINE',autoWidth : true,align:"center"}, 
+			     			{name : 'lastOnlineTime',width : 160,align : "center"},
+			     			{name : 'version',width : 160,align:"center"},
+			     			{name : 'space',width : 200,align : "center"},
+			     			{name : 'printMachine',width : 200,align : "center"},
+			     			{name : 'configFile',width : 200,align : "center"}
+			     			];
+			     			_colNames = [' ','POS编号' ,'POS开/关', '在线状态','最后在线时间' ,'POS最新版本号','POS硬盘空间大小','POS默认打印机','配置的打印文件'];
+	   window.$tlist=	 $(listId).jqGrid($.extend(defaultGridOpts, {url:queryPosMaintainUrl,colNames : _colNames,colModel : _colModel,pager:pagerId,postData:{storeId:storeId}}));
+	   var $hpanel=$(".pos-maintain-panel .page-inner-content"),w=$hpanel.width()-14,h=$(".page-content").height()-82;
+  	  	$tlist.jqGrid("setGridHeight", h).jqGrid("setGridWidth",w, false).jqGrid("autoFillWidth");
+	}
+	function keyLogin(e){
+	    var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	        $(listId).jqGrid("setGridParam",{url:loadUrl,postData:{storeName:$("#fastQueryText").val()}}).hideCol("someCol").trigger("reloadGrid");
+	    }
+		
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				<div class="form-panel">
+				</div>
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+<!-- 							<td class="buttons"><button id="posMaintain"><i class="fa fa-plus"></i>pos机维护</button></td> -->
+<!-- 						<td class="buttons"><button id="modifyBTN"><i class="fa fa-plus"></i>修改备用金</button></td> -->
+<!-- 						<td class="buttons"><button id="historyBTN"><i class="fa fa-plus"></i>历史记录</button></td> -->
+						<td style="padding-left: 24px; padding-right: 5px;"><input
+							id="fastQueryText" xdata-type="text" placeholder="输入门店名称查询" onkeydown="return keyLogin(event)"
+							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td>
+						<td>
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+<!-- 							<button id="searchRip" title="点击展开高级查询面板"> -->
+<!-- 								<i class="fa fa-angle-up" style="margin-right:0px;"></i> -->
+<!-- 							</button> -->
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="sales-data"></div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+	</div>
+	<!-- pos维护 -->
+	<div class="pos-maintain-panel full-drop-panel">
+		<!-- pos维护头部 -->
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+<!-- 					<button id="posMaintainSearchBTN"><i class="fa fa-search"></i>搜索</button> -->
+					<button id="backBTN"><i class="fa fa-hand-o-left"></i>返回</button>
+				</div>
+			</div>
+		</div>
+		<!-- pos维护内容 -->
+		<div class="page-content">
+			<!-- pos维护搜索条件 -->
+<!-- 			<div class="pos-maintain-content-search split padding-left-24"> -->
+<!-- 				<table style="height:50px;"> -->
+<!-- 					<tr> -->
+<!-- 						<td>版本号：</td> -->
+<!-- 						<td> -->
+<!-- 							<select data-xtype="chosen" name="posMaintainVersion" style="width:170px;"> -->
+<!-- 								<option>1644.15.01_V3</option> -->
+<!-- 								<option>1644.15.01_V3</option> -->
+<!-- 								<option>1644.15.01_V3</option> -->
+<!-- 							</select> -->
+<!-- 						</td> -->
+<!-- 					</tr> -->
+<!-- 				</table> -->
+<!-- 			</div> -->
+			<div class="page-inner-content" style="padding:0px;">
+		    	<!-- pos维护搜索结果 -->
+		    	<table id="posSearchResult"></table>
+		    	<div id="page3"></div>
+		    </div>
+		</div>
+	</div>
+</body>
+</html>

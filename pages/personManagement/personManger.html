@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../css/wj.css" rel="stylesheet"/>
+<link href="../../theme/default/page.personManagement.css" rel="stylesheet" />
+<script type="text/javascript" src="../../js/jquery.js"></script>
+<script type="text/javascript" src="../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../js/page.common.js"></script>
+<!--[if IE 7]>
+         <link href="../../theme/default/font.awesome.ie7.css" rel="stylesheet" />
+         <link href="../../theme/default/page.common.ie7.css" rel="stylesheet" />
+    <![endif]-->
+<script type="text/javascript">
+	var listId = "#list2", exportKey="brand",
+	editorFormId = "#editorForm", 
+	pagerId = '#pager2', 
+	listUrl = "../../position/initPositionManager.do",
+	queryListByName="../../position/ findPositionListByPositionName.do",
+	queryDepartmentUrl="../../org/findAllTheDept.do",
+	queryBackstageRoleUrl="../../func/findAllFunc.do",
+	queryGoodsRoleUrl="../../itemType/findAlItemType.do",
+	addManagerUrl="../../position/savePositionInfo.do",
+	deleteInfoUrl="../../position/deletePositionInfo.do",
+	queryEditDataUrl="../../position/loadPositionInfoByPositionId.do"
+	updateInfoUrl="../../position/updatePositionInfo.do";
+
+	$(function() {
+		_initButtons({
+			fastSearch:function(){
+				//根据岗位名称模糊查询
+				var positionName=$("#fastQueryText").val();
+				$(listId).jqGrid("setGridParam", {page:1,url : queryListByName,postData:{positionName:positionName}}).hideCol("somecol").trigger("reloadGrid");
+			},
+			insertBTN:function(){
+				showSlidePanel(".add-department-panel",function(){
+					POST(queryDepartmentUrl,JSON.stringify({}),queryDepartmentCallback);
+				});
+			},
+			addCancelBTN:function(){
+				hideSlidePanel(".add-department-panel");
+			},
+			editCancelButton:function(){
+				hideSlidePanel(".page-editor-panel");
+			},
+			editResetButton:fillEditResetData
+		});//from page.common.js
+		_initValidateForXTypeForm();
+		_initFormControls();//from page.common.js
+		var _colModel = [
+			     		    {name : 'id',key : true,width : 60,hidden : true},
+// 			     			{name : 'positionCode',width : 200,align:"center"},
+			     			{name : 'positionName',autoWidth : true,align:"center"}, 
+			     			{name : 'deptName',width : 100,align : "center"},
+			     			{name : 'positionDesc',autoWidth : true,align:"center"},
+			     			{name : 'permissionName',autoWidth : true,align:"center"},
+			     			{name : '',width : 250,align:"center",formatter:function(arg1,arg2,arg3){
+			     				return '<button class="wj-jqgrid-button" onclick="detailButton(\''+arg3.positionId
+			     						+'\')">编辑</button><button class="wj-jqgrid-button" onclick="deleteButton(\''+arg3.positionId+'\')">删除</button>';
+			     			}}
+			     			], 
+			     			_colNames = [' ', '岗位名称', '所属范围', '岗位描述','所属权限','操作'];
+		$(listId).jqGrid($.extend(defaultGridOpts, {url : listUrl,colNames : _colNames,colModel : _colModel,pager : pagerId}));
+		resizeFun();
+	});
+	//编辑操作
+	function detailButton(positionID){
+		$("#editResetButton").data("positionID",positionID);
+		//填充编辑页面的数据
+		fillEditResetData();
+	}
+	/******填充编辑页面的数据****/
+	function fillEditResetData(){
+		var positionID=$("#editResetButton").data("positionID");
+		showSlidePanel(".page-editor-panel2",function(){
+			_initFormControls();//from page.common.js
+			var deptListFlag={"deptList":"#editDepartment","funcList":"#editFuncList","itemTypeList":"#editItemTypeList","completeFuncFlag":"true"};
+			editInfoButton(queryEditDataUrl,{positionId:positionID},"#editPanel",deptListFlag);
+		});
+		$("#editorSaveButton").unbind('click').bind('click',function(){
+			var jsonList={};
+			var positionId=positionID;
+			var positionName=$("#editPositionName").val();
+			var deptId=$("#editDepartment").data("chosen").selectedItem();
+			deptId=deptId?deptId["value"]:"";
+			
+			var positionDesc=$("#editPositionDesc").val();
+			var itemTypeList=[],funcList=[];
+			var $editItemTypeList=$("#editItemTypeList label");
+			for(var i=0;i<$editItemTypeList.length;i++){
+				if($editItemTypeList.eq(i).find("input[type='checkbox']").attr("checked")=="checked"){
+					var itemTypeId=$editItemTypeList.eq(i).find("input[type='checkbox']").attr("id");
+					itemTypeList.push({itemTypeId:itemTypeId});
+				}
+			}
+			var $editFuncList=$("#editFuncList label");
+			for(var i=0;i<$editFuncList.length;i++){
+				if($editFuncList.eq(i).find("input[type='checkbox']").attr("checked")=="checked"){
+					var funcId=$editFuncList.eq(i).find("input[type='checkbox']").attr("id");
+					funcList.push({funcId:funcId});
+				}
+			}
+			jsonList={positionId:positionId,positionName:positionName,deptId:deptId,positionDesc:positionDesc,itemTypeList:itemTypeList,funcList:funcList};
+			if(positionName==""){
+				window.message({
+					text : "请输入岗位名称!",
+					title : "提示"
+				});
+				return;
+			}
+			if(deptId==undefined||deptId==""){
+				window.message({
+					text : "请选择所属部门!",
+					title : "提示"
+				});
+				return;
+			}
+			POST(updateInfoUrl,JSON.stringify(jsonList),updateInfoUrlCallback);
+		});
+	}
+	/******编辑保存的回调函数****/
+	function updateInfoUrlCallback(result){
+		hideSlidePanel(".page-editor-panel",function(){
+			$(listId).trigger("reloadGrid");
+		});
+	}
+	//删除操作
+	function deleteButton(positionId){
+		var dataArr={positionId:positionId};
+		deleteInfoButton(deleteInfoUrl,dataArr);
+	}
+	/****新增下拉页面的查询所属部门的回调函数***/
+	function queryDepartmentCallback(result){
+		if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			window.message({title:"提示信息",text: result.rspMsg});
+			return;
+		}
+		$("#addPositionName").val("");
+		$("#addpositionDesc").val("");
+		var result=result.rows,str="<option></option>";
+		for(var i in result){
+			str+='<option id="'+result[i].deptId+'">'+result[i].deptName+'</option>';
+		}
+		$("#addDepartment").html(str);
+		$("#addPositionName").val("");
+		$("#addpositionDesc").val("");
+		$("#addDepartment").data("chosen").selectedItem("");
+		//新增下拉页面的查询后台权限
+		POST(queryBackstageRoleUrl,JSON.stringify({}),queryBackstageRoleCallBack);
+	}
+	/***新增下拉页面的查询后台权限*******/
+	function queryBackstageRoleCallBack(result){
+		if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			window.message({title:"提示信息",text: result.rspMsg});
+			return;
+		}
+		var str="",result=result.rows;
+		for(var i in result){
+			str+='<label><input id="'+result[i].funcId+'" type="checkbox"/>'+result[i].funcName+'</label>';
+		}
+		$("#backStageRole").html(str);
+		//新增下拉页面的查询商品权限
+		POST(queryGoodsRoleUrl,JSON.stringify({}),queryGoodsRoleCallback);
+	}
+	/***新增下拉页面的查询商品权限*******/
+	function queryGoodsRoleCallback(result){
+		if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			window.message({title:"提示信息",text: result.rspMsg});
+			return;
+		}
+		var str="",result=result.rows;
+		for(var i in result){
+			str+='<label><input id="'+result[i].itemTypeId+'" type="checkbox"/>'+result[i].itemTypeName+'</label>';
+		}
+		$("#goodsRole").html(str);
+		//点击保存按钮
+		$("#addSaveBTN").unbind('click').bind('click',function(){
+			var positionName=$("#addTable tr:eq(0) input").val();//岗位名称
+			var itemTypeList=[],funcList=[];//商品权限列表,功能权限列表
+			var roleID=['#goodsRole','#backStageRole'];
+			for(var i=0;i<roleID.length;i++){
+				for(var j=0;j<$(roleID[i]+" label").length;j++){
+					if($(roleID[i]+" label").eq(j).find("input").attr("checked")=="checked"){
+						if(roleID[i]=="#goodsRole"){
+							itemTypeList.push({itemTypeId:$(roleID[i]+" label").eq(j).find("input").attr("id")});
+						}else if(roleID[i]=="#backStageRole"){
+							funcList.push({funcId:$(roleID[i]+" label").eq(j).find("input").attr("id")});
+						}
+					}
+				}
+			}
+			var optLen=$("#addDepartment option").length;
+			var deptName=$("#addDepartment").val();
+			var deptId="";
+			for(var k=0;k<optLen;k++){
+				if(deptName==$("#addDepartment option").eq(k).val()){
+					deptId=$("#addDepartment option").eq(k).attr("id");
+					break;
+				}
+			}
+			var positionDesc=$("#addpositionDesc").val();
+			if(positionName==""){
+				window.message({
+					text : "请输入岗位名称!",
+					title : "提示"
+				});
+				return;
+			}
+			if(deptId==undefined||deptId==""){
+				window.message({
+					text : "请选择所属部门!",
+					title : "提示"
+				});
+				return;
+			}
+			POST(addManagerUrl,JSON.stringify({positionName:positionName,itemTypeList:itemTypeList,funcList:funcList,deptId:deptId,positionDesc:positionDesc}),function(result){
+				if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+					window.message({title:"提示信息",text: result.rspMsg});
+					return;
+				}
+				hideSlidePanel(".add-department-panel",function(){
+					$(listId).trigger("reloadGrid");
+				});
+			});
+		});
+	}
+	function keyLogin(e){
+		var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+	        
+	        
+	      //根据岗位名称模糊查询
+			var positionName=$("#fastQueryText").val();
+			$(listId).jqGrid("setGridParam", {page:1,url : queryListByName,postData:{positionName:positionName}}).hideCol("somecol").trigger("reloadGrid");
+	    }
+	}
+</script>
+</head>
+<body><form id="exportExcelForm" method="post"><input type="hidden" name="data"/></form>
+	<div class="page-list-panel">
+	   <div class="t-content-panel">
+		<div class="head-panel">
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0"
+					border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i
+							class="fa fa-list-ul micon"></i></td>
+						<td class="buttons">
+							<button id="insertBTN">
+								<i class="fa fa-plus"></i>新增岗位
+							</button>
+						</td>
+						<td style="padding-left: 24px; padding-right: 5px;"><input placeholder="可以输入岗位名称查询" onkeydown="return keyLogin(event)"
+							id="fastQueryText" type="text"
+							style="line-height: 1em; font-size: 1em; cursor: text;width:150px;" class="form-control" /></td>
+						<td>
+							<button id="fastSearch" title="查询" style="margin-left:0px;">
+								<i class="fa fa-search" style="margin-right:0px;"></i>
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<table id="list2"></table>
+		<div id="pager2"></div>
+		</div>
+	</div>
+	
+	<!--  新增  -->
+	<div class="add-department-panel full-drop-panel">
+		<div class="title-bar">
+			<h4><i class="fa fa-plus"></i></h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="addSaveBTN"><i class="fa fa-check"></i>保存</button>
+					<button id="addCancelBTN"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<div class="page-detail-panel">
+					<div class="page-detail-panel-title"></div>
+					<table class="page-detail-panel-content" id="addTable">
+						<tr>
+							<td>岗位名称：</td>
+							<td class="on"><input id="addPositionName" style="width:300px;" type="text" value=""/></td>
+						</tr>
+<!-- 						<tr> -->
+<!-- 							<td>岗位编号：</td> -->
+<!-- 							<td class="on"><input style="width:300px;" type="text" value="" disabled/></td> -->
+<!-- 						</tr> -->
+						<tr>
+							<td>所属部门：</td>
+							<td class="on">
+								<select data-xtype="chosen" id="addDepartment" style="width:150px;" >
+                           			
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>后台模块权限：</td>
+							<td class="on" id="backStageRole">
+<!-- 								<label for="member1"><input id="member1" type="checkbox"/>会员管理</label> -->
+							</td>
+						</tr>
+						<tr>
+							<td>商品权限功能：</td>
+							<td class="on" id="goodsRole">
+<!-- 								<label for="member1"><input id="member1" type="checkbox"/>会员管理</label> -->
+								
+							</td>
+						</tr>
+						<tr>
+							<td>岗位描述：</td>
+							<td class="on"><textarea id="addpositionDesc" style="width:300px;height:80px;border:1px solid #aaa;padding:3px;"></textarea></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	
+	<!-- 编辑-保存 -->
+	<div class="page-editor-panel page-editor-panel2 full-drop-panel">
+		<div class="title-bar">
+			<h4>
+				<i class="fa fa-plus"></i>编辑
+			</h4>
+			<div class="btn-area">
+				<div style="margin-top: 4px;">
+					<button id="editorSaveButton"><i class="fa fa-check"></i>保存</button>
+					<button id="editResetButton" style="margin-right: 24px;"><i class="fa fa-undo"></i>重置</button>
+					<button id="editCancelButton"><i class="fa fa-times"></i>取消</button>
+				</div>
+			</div>
+		</div>
+		<div class="page-content">
+			<div class="page-inner-content">
+				<!-- 详情展示 /编辑-->
+				<div class="page-detail-panel">
+					<div class="page-detail-panel-title"></div>
+					<form action="" id="editPanel">
+						<!-- 编辑-->
+						<table class="page-detail-panel-content">
+							<tr>
+								<td>岗位名称：</td>
+								<td class="on"><input id="editPositionName" name="positionName" style="width:300px;" type="text" value=""/></td>
+							</tr>
+	<!-- 						<tr> -->
+	<!-- 							<td>岗位编号：</td> -->
+	<!-- 							<td class="on"><input style="width:300px;" value=""/></td> -->
+	<!-- 						</tr> -->
+							<tr>
+								<td>所属部门：</td>
+								<td class="on">
+									<select data-xtype="chosen" style="width:150px;" name="deptId" id="editDepartment">
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<td>后台模块权限：</td>
+								<td class="on" id="editFuncList">
+	<!-- 								<label for="member4"><input id="member4" type="checkbox"/>会员管理</label> -->
+								</td>
+							</tr>
+							<tr>
+								<td>商品权限功能：</td>
+								<td class="on" id="editItemTypeList">
+	<!-- 								<label for="member1"><input id="member1" type="checkbox"/>会员管理</label> -->
+									
+								</td>
+							</tr>
+							<tr>
+								<td>岗位描述：</td>
+								<td class="on"><textarea id="editPositionDesc" name="positionDesc" style="width:300px;border:1px solid #aaa;padding:3px;"></textarea></td>
+							</tr>
+						</table>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

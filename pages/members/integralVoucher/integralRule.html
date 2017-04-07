@@ -1,0 +1,226 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.members.css" rel="stylesheet" />
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script src="../../../js/highcharts.js"></script>
+<style type="text/css">
+	.t-left-panel{
+    background-color: white;
+    display: none;
+    height: 100%;
+    position: absolute;
+    width: 250px;
+    z-index: 2;
+    border-right:1px solid #ccc;
+    margin-top:35px;
+}
+.t-left-panel .toolbar{padding:12px;}
+.t-left-panel-title{height:30px;background:#018659;width:100%;}
+/* #treeDemo{height:200px;} */
+.t-left-panel .tree-button{position:absolute;buttom:0px;left:0;height:50px;width:236px;bakcground:#fca2ca;}
+.t-left-panel .tree-button a{width:95px;margin:10px 0 10px 12px ;height:30px;line-height:30px;text-align:center;color:#fff;background:#018659;}
+table.add-detail-step1-table .memberRadio label + label{margin-left:12px;}
+table.memer-radio-details td{height:24px;}
+input{vertical-align:middle;}
+.integral-rules tbody td{
+	padding:6px 4px;
+}
+</style>
+<script type="text/javascript">
+	var patternA=/^[0-9]+([.]{1}[0-9]+){0,1}$/,
+		patternB= /^\+?[1-9]\d*$/,
+		ruleListLen="",
+		listUrl="../../../point/findPointRuleList.do",
+		saveRulesUrl="../../../point/savePointRuleList.do",
+		updateRulesUrl="../../../point/updateCouponRule.do";
+$(function() {
+	_initButtons({
+		addIntegralBTN: addIntegralFunc,
+		cancelIntegralBTN: queryIntegralFunc
+		
+	});//from page.common.js
+	//查询积分规则
+	queryIntegralFunc();
+});
+/********查询积分规则********/
+function queryIntegralFunc(){
+	POST(listUrl,JSON.stringify({}),function(result){
+		if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			window.message({title:"提示信息",text: result.rspMsg});
+			return;
+		}
+		var result=result['rows'],
+			str="";
+		ruleListLen=result.length;
+		for(var i in result){
+			str+='<tr name="'+result[i]['pointRuleId']+'">'
+					+'<td>'+(Number(i+'')+1)+'</td>'
+					+'<td><input name="pointRuleLevel" value="'+result[i]['pointRuleLevel']+'"/></td>'
+					+'<td>'
+					+'	<div class="inline">累计消费&nbsp;&nbsp;<input name="billMinAmt" value="'+result[i]['billMinAmt']
+					+'"/>&nbsp;-&nbsp;<input name="billMaxAmt" value="'+result[i]['billMaxAmt']+'"/>&nbsp;&nbsp;元</div>'
+					+'	<div class="inline">每消费&nbsp;&nbsp;<input name="perBillAmt" value="'+result[i]['perBillAmt']+'"/>&nbsp;&nbsp;元</div>'
+					+'	<div class="inline">获得&nbsp;&nbsp;<input name="point" value="'+result[i]['point']+'"/>&nbsp;&nbsp;积分</div>'
+					+'</td>'
+				+'</tr>';
+		}
+		$(".integral-rules tbody").html(str);
+		//更改积分规则
+		updateIntegralRulesFunc();
+	});
+}
+/**点击新增积分按钮**/
+function addIntegralFunc(){
+	var tbodyLen=$(".integral-rules tbody tr").length;
+	tbodyLen++;
+	var str='<tr>'
+				+'<td>'+tbodyLen+'</td>'
+				+'<td><input name="pointRuleLevel"/></td>'
+				+'<td>'
+				+'	<div class="inline">累计消费&nbsp;&nbsp;<input name="billMinAmt"/>&nbsp;-&nbsp;<input name="billMaxAmt"/>&nbsp;&nbsp;元</div>'
+				+'	<div class="inline">每消费&nbsp;&nbsp;<input name="perBillAmt"/>&nbsp;&nbsp;元</div>'
+				+'	<div class="inline">获得&nbsp;&nbsp;<input name="point"/>&nbsp;&nbsp;积分</div>'
+				+'</td>'
+			+'</tr>';
+	$(".integral-rules tbody").append(str);
+	$("#saveIntegralBTN").unbind("click").bind('click',function(){
+		addIntegralBTNFunc();
+	});
+}
+/*************更改积分规则*************/
+function updateIntegralRulesFunc(){
+	var pointRuleId="",data={},name="",inputVal="",billMaxAmtVal="",billMinAmtVal="";
+	$(".integral-rules tr input").unbind('change').bind('change',function(){
+		pointRuleId=$(this).parents('tr').attr("name");
+		name=$(this).attr("name");
+		inputVal=Number($(this).val()+"");
+		billMaxAmtVal=Number($(this).parents('tr').find('input[name="billMaxAmt"]').val()+"");
+		billMinAmtVal=Number($(this).parents('tr').find('input[name="billMinAmt"]').val()+"");
+		if(name=="pointRuleLevel"){
+			if(!patternB.test(inputVal)){
+				window.message({title:"提示信息",text: "请输入等级大于0的整数"});
+				return;
+			}
+			data={pointRuleId: pointRuleId,pointRuleLevel: inputVal};
+		}else if(name=="billMinAmt"){
+			if((!patternA.test(inputVal))||billMaxAmtVal<inputVal){
+				window.message({title:"提示信息",text: "请输入有效的累计消费金额"});
+				return;
+			}
+			data={pointRuleId: pointRuleId,billMinAmt: inputVal};
+		}else if(name=="billMaxAmt"){
+			if((!patternA.test(inputVal))||billMinAmtVal>inputVal){
+				window.message({title:"提示信息",text: "请输入有效的累计消费金额"});
+				return;
+			}
+			data={pointRuleId: pointRuleId,billMaxAmt: inputVal};
+		}else if(name=="perBillAmt"){
+			if((!patternA.test(inputVal))){
+				window.message({title:"提示信息",text: "请输入有效的每消费金额"});
+				return;
+			}
+			data={pointRuleId: pointRuleId,perBillAmt: inputVal};
+		}else if(name=="point"){
+			if((!patternA.test(inputVal))||billMaxAmtVal<inputVal){
+				window.message({title:"提示信息",text: "请输入有效的获得积分值"});
+				return;
+			}
+			data={pointRuleId: pointRuleId,point: inputVal};
+		}
+		POST(updateRulesUrl,JSON.stringify(data),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+		});
+	});
+}
+	/********点击保存******/
+	function addIntegralBTNFunc(){
+		var integralTrLen=$(".integral-rules tbody tr").length
+		if(integralTrLen==ruleListLen){
+			queryIntegralFunc();
+			return;
+		}
+		var pointRuleArr=[];
+		for(var i=0;i<(integralTrLen-ruleListLen);i++){
+			var $tr=$(".integral-rules tbody tr:eq("+(ruleListLen+i)+")"),
+				pointRuleLevel= $tr.find("input[name='pointRuleLevel']").val(),
+				billMinAmt=$tr.find("input[name='billMinAmt']").val(),
+				billMaxAmt=$tr.find("input[name='billMaxAmt']").val(),
+				perBillAmt=$tr.find("input[name='perBillAmt']").val(),
+				point=$tr.find("input[name='point']").val();
+			if(!patternB.test(pointRuleLevel)){
+				window.message({title:"提示信息",text: "请输入等级大于0的整数"});
+				return;
+			}
+			if(!patternA.test(billMinAmt)||!patternA.test(billMaxAmt)||!patternA.test(perBillAmt)||!patternA.test(point)){
+				window.message({title:"提示信息",text: "请输入有效的新增内容值"});
+				return;
+			}
+			pointRuleArr.push({pointRuleLevel: pointRuleLevel,billMinAmt: billMinAmt,billMaxAmt: billMaxAmt,perBillAmt: perBillAmt,point: point});
+		}
+		POST(saveRulesUrl,JSON.stringify({pointRuleList: pointRuleArr}),function(result){
+			if(result.rspCode&&result.rspCode<=0){if(result.rspCode&&result.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+				window.message({title:"提示信息",text: result.rspMsg});
+				return;
+			}
+			queryIntegralFunc();
+		});
+	}
+</script>
+</head>
+<body>
+	<div class="page-list-panel">
+		<div class="head-panel" style="margin:0">
+			<div class="search-panel">
+				
+			</div>
+			<div class="toolbar">
+				<table style="height: 100%;" cellpadding="0" cellspacing="0" border="0">
+					<tr>
+						<td style="padding-left: 12px; padding-right: 24px;"><i class="fa fa-list-ul micon"></i></td>
+						<td style="padding-left: 12px;"><button type="button" id="addIntegralBTN">新增</button></td>
+						<td style="padding-left: 12px;"><button type="button" id="saveIntegralBTN">保存</button></td>
+						<td style="padding-left: 12px;"><button type="button" id="cancelIntegralBTN">取消</button></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<div class="integral-rules-box">
+			<table class="integral-rules" width="100%"; border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<tr><td>序号</td><td>等级</td><td>积分规则</td></tr>
+				</thead>
+				<tbody>
+<!-- 					<tr> -->
+<!-- 						<td>1</td> -->
+<!-- 						<td><input/></td> -->
+<!-- 						<td> -->
+<!-- 							<div class="inline">累计消费&nbsp;&nbsp;<input/>&nbsp;-&nbsp;<input/>&nbsp;&nbsp;元</div> -->
+<!-- 							<div class="inline">每消费&nbsp;&nbsp;<input/>&nbsp;&nbsp;元</div> -->
+<!-- 							<div class="inline">获得&nbsp;&nbsp;<input/>&nbsp;&nbsp;积分</div> -->
+<!-- 						</td> -->
+<!-- 					</tr> -->
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+</html>

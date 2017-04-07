@@ -1,0 +1,242 @@
+[
+        {
+            "label":"主档信息",
+            "cls":"main-doc-icon",
+            "id":"mainDoc",
+            "children":[
+                {
+                    "label":"税种",
+                    "cls":"",
+                    "id":"mainDoc-sz",
+                    "url":"pages/sz.html",
+                    "children":[
+                        {
+                            "label":"营业税",
+                            "cls":"",
+                            "id":"mainDoc-yys",
+                            "url":"pages/yys.html",
+                            "children":[
+                                
+                            ]
+                        },
+                        {
+                            "label":"印花税",
+                            "cls":"",
+                            "id":"mainDoc-yhs",
+                            "url":"pages/yhs.html",
+                            "children":[
+                                
+                            ]
+                        },
+                        {
+                            "label":"增值税",
+                            "cls":"",
+                            "id":"mainDoc-zzs",
+                            "url":"pages/zzs.html",
+                            "children":[
+                                
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "label":"应税业务类型",
+                    "cls":"fa fa-edit",
+                    "id":"ysywlx",
+                    "url":"pages/ysywlx.html",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"申报表业务类型",
+                    "cls":"fa fa-edit",
+                    "id":"sbbywlx",
+                    "url":"pages/sbbywlx.html",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"品牌",
+                    "cls":"",
+                    "id":"pinpai",
+                    "url":"pages/pinpai.html",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"财务市场",
+                    "cls":"",
+                    "id":"caiwushicang",
+                    "url":"pages/caiwushic.html",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"行政区域",
+                    "cls":"",
+                    "id":"xzqy",
+                    "url":"pages/xingzhengquyu.html",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"会计科目",
+                    "cls":"",
+                    "id":"kjkm",
+                    "url":"pages/layout.html",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"账期配置",
+                    "cls":"",
+                    "id":"zqpz",
+                    "url":"pages/pick.html",
+                    "children":[
+                        
+                    ]
+                }
+            ]
+        },
+        {
+            "label":"差异分析模块",
+            "cls":"contrast-icon",
+            "id":"contrast",
+            "children":[
+                
+            ],
+            "url":"pages/dxc.html"
+        },
+        {
+            "label":"申报模块",
+            "cls":"report-to-icon",
+            "id":"reportTo",
+            "children":[
+                
+            ]
+        },
+        {
+            "label":"支付跟踪",
+            "cls":"pay-icon",
+            "id":"pay",
+            "children":[
+                
+            ]
+        },
+        {
+            "label":"汇签模块",
+            "cls":"sign-icon",
+            "id":"sign",
+            "children":[
+                
+            ]
+        },
+        {
+            "label":"报表",
+            "cls":"report-icon",
+            "id":"report",
+            "children":[
+                
+            ]
+        },
+        {
+            "label":"政策法规",
+            "cls":"legal-icon",
+            "id":"legal",
+            "children":[
+                
+            ]
+        },
+        {
+            "label":"历史申报查询",
+            "cls":"history-icon",
+            "id":"history",
+            "children":[
+                
+            ]
+        },
+        {
+            "label":"文档管理",
+            "cls":"doc-icon",
+            "id":"doc",
+            "children":[
+                
+            ]
+        },
+        {
+            "label":"系统设置",
+            "cls":"setting-icon",
+            "id":"setting",
+            "children":[
+                {
+                    "label":"用户管理",
+                    "cls":"",
+                    "id":"mainDoc-yys",
+                    "url":"platform/user.do",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"角色管理",
+                    "cls":"",
+                    "id":"mainDoc-yys",
+                    "url":"platform/role.do",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"组织机构管理",
+                    "cls":"",
+                    "id":"mainDoc-yys",
+                    "url":"platform/organization.do",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"用户组管理",
+                    "cls":"",
+                    "id":"mainDoc-yys",
+                    "url":"platform/userGroup.do",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"菜单管理",
+                    "cls":"",
+                    "id":"mainDoc-yys",
+                    "url":"platform/menu.do",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"业务日志查询",
+                    "cls":"",
+                    "id":"mainDoc-yys",
+                    "url":"pages/yys.html",
+                    "children":[
+                        
+                    ]
+                },
+                {
+                    "label":"系统日志查询",
+                    "cls":"",
+                    "id":"mainDoc-yys",
+                    "url":"pages/yys.html",
+                    "children":[
+                        
+                    ]
+                }
+            ]
+        }
+    ]

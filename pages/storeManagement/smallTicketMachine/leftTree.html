@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="../../../theme/default/ui.custom.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.jqgrid.css" rel="stylesheet" />
+<link href="../../../theme/default/font.awesome.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.chosen.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.uploadfile.css" rel="stylesheet" />
+<link href="../../../theme/default/page.common.css" rel="stylesheet" />
+<link href="../../../theme/default/page.sales.css" rel="stylesheet" />
+<link href="../../../theme/default/ui.pick.css" rel="stylesheet" />
+<link href="../../../theme/default/page.personManagement.css" rel="stylesheet" />
+<link href="../../css/wj.css" rel="stylesheet"/>
+<script type="text/javascript" src="../../../js/jquery.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/ui.jqgrid.js"></script>
+<script type="text/javascript" src="../../../js/ui.autosearch.js"></script>
+<script type="text/javascript" src="../../../js/ui.chosen.js"></script>
+<script type="text/javascript" src="../../../js/ui.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.custom.js"></script>
+<script type="text/javascript" src="../../../js/jquery.validate.js"></script>
+<script type="text/javascript" src="../../../js/page.common.js"></script>
+<script type="text/javascript" src="../../../js/ui.pick.js"></script>
+<link rel="stylesheet" href="../../../theme/default/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="../../../js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="../../../js/jquery.ztree.excheck.js"></script>
+<style type="text/css">
+	.t-left-panel{width:350px;margin:24px auto 0;height:100%;}
+	.t-left-panel-title{height:30px;background:#018659;width:100%;}
+	.full-drop-panel{display:block;}
+	element.style {
+    margin-left: 0;
+}
+.toolbar{background:#efefef;}
+.toolbar button, .search-panel button, .title-bar button {
+    margin-left: 2px;
+    margin-right: 2px;
+}
+.fa-search {
+    background: #018659 none repeat scroll 0 0;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    height: 24px;
+    left: 170px;
+    line-height: 24px;
+    position: absolute;
+    text-align: center;
+    top: 1px;
+    width: 30px;
+    padding:4px 6px;border-radius:3px;
+}
+</style>
+<script type="text/javascript">
+var result=[],zNodes=[],
+	queryAllStore="../../../org/findAllTheStore.do",
+	queryStoreByStoreName="../../../org/findStoreListSelective.do";
+$(function(){
+	 //获取所有树节点
+	getTreeNodesFunc();
+  // zTree 的数据属性，深入使用请参考 API 文档（zTreeNode 节点数据详解）
+//   var zNodes = [
+//   {name:"中国",id:"01",pId:"0",open:false, 
+// 	  	children:[
+// 	  	          {name:"上海",id:"1",pId:"01",open:false, children:[{name:"闵行",pId:"1",id:"11"}, {name:"徐汇",pId:"1",id:"12"}]},
+// 	  	          {name:"北京",id:"2",pId:"01",open:false, children:[{name:"东城",pId:"2",id:"21"}, {name:"西城",pId:"2",id:"22"}]}
+// 	  	          ]},
+// 	  	        {name:"中国1",id:"02",pId:"0",open:false, 
+// 	  	    	  	children:[
+// 	  	    	  	          {name:"上海1",pId:"02",id:"3",open:false, children:[{name:"闵行1",pId:"3",id:"31",}, {name:"徐汇1",pId:"3",id:"32",}]}
+// 	  	    	  	          ]}
+//   ];
+//   zTreeObj = $.fn.zTree.init($("#treeDemo"), setting, zNodes,delayFun);
+// //重置左边树状型的高宽
+//   resizeLeftTree();
+//点击搜索
+	$("#storeTreeSearch").unbind("click").bind("click",function(){
+		searchStoreTree();
+	});
+});
+function searchStoreTree(){
+	var storeName=$("#storeNameTreeSearch").val();
+	var zTreeData={storeName:storeName};
+	var zNodesChecked=[];
+	POST(queryStoreByStoreName,JSON.stringify(zTreeData),function(resultData){
+		if(resultData.rspCode&&resultData.rspCode<=0){
+			if(resultData.rspCode&&resultData.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			window.message({title:"提示信息",text: resultData.rspMsg});
+			return;
+		}
+		var resultData=resultData.rows;
+		result=[];
+		for(var i in resultData){
+			result.push({text: resultData[i].storeName,value: resultData[i].storeId+"_storeId"});
+		}	
+		ONCHECK2();
+	});
+}
+/*********获取所有树节点***********/
+function getTreeNodesFunc(){
+	//查询所有的区域
+	POST(queryAllStore,JSON.stringify({}),function(resultData){
+		if(resultData.rspCode&&resultData.rspCode<=0){
+			if(resultData.rspCode&&resultData.rspCode==-2){window.top.location.href=window.top.location.href.substring(0,window.top.location.href.indexOf("platform.do"));return;}
+			window.message({title:"提示信息",text: resultData.rspMsg});
+			return;
+		}
+		var resultData=resultData.rows;
+		for(var i in resultData){
+			zNodes.push({name: resultData[i].regionName,id: resultData[i].regionId+"_regionId",pId:"0",children:[]});
+			var cityList=resultData[i].cityList;
+			if(cityList){
+				for(var j in cityList){
+					var zNodesLen=zNodes.length==0?0:zNodes.length-1;
+					zNodes[zNodesLen].children.push({name: cityList[j].cityName,id:cityList[j].cityId+"_cityId",pId:resultData[i].regionId,children:[]});
+					var districtList=cityList[j].districtList
+					if(districtList){
+						for(var k in districtList){
+							var districtListChildren=zNodes[zNodesLen].children;
+							var districtListChildrenLen=districtListChildren.length==0?0:districtListChildren.length-1;
+							districtListChildren[districtListChildrenLen].children.push({name: districtList[k].districtName,id:districtList[k].districtId+"_districtId",pId:cityList[j].cityId,children:[]});
+							var storeList=districtList[k].storeList;
+							if(storeList){
+								for(var m in storeList){
+									var storeListChildren=districtListChildren[districtListChildrenLen].children;
+									var storeListChildrenLen=storeListChildren.length==0?0:storeListChildren.length-1;
+									storeListChildren[storeListChildrenLen].children.push({name: storeList[m].storeName,id:storeList[m].storeId+"_storeId",pId:districtList[k].districtId});
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		var zTreeObj;
+		 // zTree 的参数配置，深入使用请参考 API 文档（setting 配置详解）
+		 var setting = {
+			   check: {
+				   enable: true,
+				   chkStyle: "checkbox",
+				   chkboxType: { "Y" : "ps", "N" : "ps" }
+				   },
+			   view: {
+				   showLine: true,
+				   selectedMulti: false,
+				   },
+			   data: {
+				   simpleData: {
+				   		enable: true,
+				   		idKey: "id",
+						pIdKey: "pId",
+						rootPId: 0
+				   }
+			  }
+	  };
+		zTreeObj = $.fn.zTree.init($("#treeDemo"), setting, zNodes,delayFun);
+		//重置左边树状型的高宽
+		resizeLeftTree();
+	});
+}
+
+/*******初始化选中的节点********/
+function ONCHECK(){
+	if(result.length>0){
+		var treeObj = $.fn.zTree.getZTreeObj("treeDemo");
+		var nodes=treeObj.getNodes();
+		var checkedId;
+		var nodeId;
+		for(var j=0;j<result.length;j++){
+			checkedId=result[j].value;
+			nodeId=treeObj.getNodeByParam("id", checkedId, null);
+// 			if(nodeId){
+				treeObj.checkNode(nodeId, true, true);
+				treeObj.expandNode(nodeId, true, true, true);
+				treeObj.selectNode(nodeId);
+// 			}
+		}
+	}
+}
+/***搜索******/
+function ONCHECK2(){
+	if(result.length>0){
+		var treeObj = $.fn.zTree.getZTreeObj("treeDemo");
+		var nodes=treeObj.getNodes();
+		var checkedId;
+		var nodeId;
+		for(var j=0;j<result.length;j++){
+			checkedId=result[j].value;
+			nodeId=treeObj.getNodeByParam("id", checkedId, null);
+			if(nodeId){
+				treeObj.checkNode(nodeId, true, true);
+				treeObj.expandNode(nodeId, true, true, true);
+				treeObj.selectNode(nodeId);
+			}
+		}
+	}
+}
+function delayFun(){
+	var treeCheckedFlag=sessionStorage.getItem('treeCheckedFlag');
+	if(treeCheckedFlag!="true"){
+		ONCHECK();
+	}else{
+		sessionStorage.setItem("treeCheckedFlag","false");
+	}
+}
+function resizeLeftTree(){
+	var hPanel=$(".t-left-panel").height(),
+		hToolbar=$(".t-left-panel .toolbar").height(),
+		hTree=hPanel-hToolbar;
+	$("#treeDemo").css({height:hTree,width:"350px","overflow-y":"auto","overflow-x":"auto"});
+}
+
+function getValue() {
+	var result2 = [];
+	var treeObj = $.fn.zTree.getZTreeObj("treeDemo");
+	var nodes = treeObj.getNodes();
+	var arr=[];
+	//获取选中的节点名称
+	checkedNode(nodes,result2);
+	return result2;
+}
+/******获取选中的节点名称*************/
+function checkedNode(nodes,result2){
+	for(var i=0;i<nodes.length;i++){
+		if(nodes[i].children&&(nodes[i].children.length>0||(nodes[i].children.length=="0"&&nodes[i].check_Child_State!="-1"))){
+			if(nodes[i].check_Child_State==2){
+				//填充result2
+				fillResult2(result2,nodes[i]);
+				continue;
+			}else if(nodes[i].check_Child_State==1){
+				checkedNode(nodes[i].children,result2);
+			}
+		}else{
+			if(nodes[i].checked==true){
+				//填充result2
+				fillResult2(result2,nodes[i]);
+				continue;
+			}
+		}
+	}
+}
+/*******填充result2************/
+function fillResult2(result2,node){
+	var data=new Object();
+	data.text=node.name;
+	data.value=node.id;
+	result2.push(data);
+}
+function setValue(data) {
+   result=data;
+}
+
+function clearValue() {
+	result = [];
+	var treeObj = $.fn.zTree.getZTreeObj("treeDemo");
+	treeObj.checkAllNodes(false);
+}
+
+function keyLogin(e){
+	var keynum="";if(window.event){keynum = e.keyCode}else if(e.which){keynum = e.which}if (keynum == 13){
+        
+        
+        searchStoreTree();
+    }
+}
+</script>
+</head>
+<body>
+	<div style="width:350px;height:450px;margin:0 auto;">
+		<div class="t-left-panel">
+	   		<div class="toolbar" style="position:relative;">
+				<input data-xtype="text" placeholder="门店查询" onkeydown="return keyLogin(event)" id="storeNameTreeSearch" style="width:120px;" class="left-search-shop" />
+				<a class="fa fa-search" id="storeTreeSearch"></a>
+			</div>
+			<!-- 左边树形图 -->
+			<ul id="treeDemo" class="ztree"></ul>
+	   </div>
+	 </div>
+</body>
+</html>
